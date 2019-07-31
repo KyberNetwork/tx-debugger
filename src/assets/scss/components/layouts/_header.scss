@@ -1,0 +1,40 @@
+.header {
+  background-color: white;
+
+  &__container {
+    display: flex;
+    align-items: center;
+    padding: 15px 0;
+  }
+
+  &__logo {
+    margin-right: 25px;
+  }
+
+  &__content {
+    position: relative;
+    padding-left: 25px;
+    font-size: 14px;
+    font-weight: 500;
+
+    &::before {
+      content: '';
+      position: absolute;
+      width: 1px;
+      height: 80%;
+      left: 0;
+      top: 50%;
+      transform: translateY(-50%);
+      background-color: $grey-lighter;
+    }
+
+    &-title {
+      color: $black;
+      margin-bottom: 3px;
+    }
+
+    &-tx {
+      color: $green;
+    }
+  }
+}
