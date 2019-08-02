@@ -1,0 +1,115 @@
+.tx-debugger {
+  display: flex;
+  justify-content: space-between;
+
+  &__box {
+    border-radius: 6px;
+    box-shadow: 0 2px 22px -10px rgba(0, 0, 0, 0.14);
+    background-color: #ffffff;
+  }
+
+  &__header {
+    padding: 15px 25px;
+    font-size: 17px;
+    font-weight: 500;
+    color: $black;
+    background-color: #fff;
+  }
+
+  &__content {
+    padding: 20px 25px;
+  }
+
+  &__item {
+    display: flex;
+    margin-bottom: 15px;
+  }
+
+  &__number {
+    width: 22px;
+    height: 22px;
+    border-radius: 50%;
+    text-align: center;
+    background-color: #9ea1aa;
+    color: white;
+    font-size: 13px;
+    font-weight: 500;
+    padding-top: 4px;
+    margin-right: 10px;
+    position: relative;
+    bottom: 1px;
+  }
+
+  &__bug {
+    width: calc(100% - 32px);
+    font-size: 14px;
+    color: #5a5e67;
+    line-height: 20px;
+  }
+
+  &__text {
+    color: $white-smoke;
+    font-size: 14px;
+
+    &::after {
+      content: '';
+      display: inline-block;
+      margin-left: 10px;
+    }
+
+    &--green {
+      color: $green-light;
+
+      &::after {
+        width: 18px;
+        height: 13px;
+        background-image: url($image-path + 'icons/check-mark.svg');
+      }
+    }
+
+    &--red {
+      color: $red;
+
+      &::after {
+        width: 14px;
+        height: 14px;
+        background-image: url($image-path + 'icons/x-mark.svg');
+        position: relative;
+        top: 2px;
+      }
+    }
+
+    &--white {
+      color: white;
+    }
+  }
+
+  &__debug {
+    width: 50%;
+    background-color: #252939;
+
+    .tx-debugger__content {
+      line-height: 22px;
+    }
+  }
+
+  &__summary {
+    width: 45%;
+
+    .tx-debugger__content {
+      position: relative;
+
+      &::after {
+        content: '';
+        width: calc(100% - 50px);
+        height: 1px;
+        background-color: $grey-lighter;
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        margin: 0 auto;
+      }
+    }
+  }
+}
