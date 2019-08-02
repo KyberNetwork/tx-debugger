@@ -173,7 +173,7 @@ export default function useTxDebugger(txHash) {
         if (calculators.compareTwoNumber(rates.expectedPrice, 0) === 0) {
           setTxErrors({
             ...txErrors,
-            rate: {...txErrors.rate, checking: false, error: 'Cannot get rate at the moment.'}
+            rate: {...txErrors.rate, checking: false, error: 'Rate is zero at execution time.'}
           });
         } else {
           if (calculators.compareTwoNumber(minConversionRate, rates.expectedPrice) === 1) {

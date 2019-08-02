@@ -1,11 +1,11 @@
 import Web3 from "web3";
 import { KYBER_NETWORK_ABI, ERC20_ABI} from "../config/app";
-import { RESERVE_ADDRESS, NETWORK_ADDRESS } from "../config/env";
+import { RESERVE_ADDRESS, NETWORK_ADDRESS, NODE_URL } from "../config/env";
 import * as calculators from "../utils/calculators";
 
 export default class Web3Service {
   constructor() {
-    this.web3 = new Web3(Web3.givenProvider);
+    this.web3 = new Web3(new Web3.providers.HttpProvider(NODE_URL));
     this.erc20Contract = new this.web3.eth.Contract(ERC20_ABI);
     this.networkContract = new this.web3.eth.Contract(KYBER_NETWORK_ABI, NETWORK_ADDRESS);
   }
