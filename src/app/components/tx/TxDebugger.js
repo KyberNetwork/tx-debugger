@@ -9,8 +9,6 @@ export default function TxDebugger(props) {
   const { tx } = useContext(AppContext);
 
   function renderDebugTerminal() {
-    console.log(tx);
-
     return (
       <div>
         <div className={"tx-debugger__text tx-debugger__text--white"}>Debugging...</div>
