@@ -1,65 +1,153 @@
-import { useState, useEffect } from 'react';
+import { useEffect, useContext } from 'react';
 import Web3Service from "../../../services/Web3Service";
 import * as calculators from "../../../utils/calculators";
 import { ETHER_ADDRESS } from "../../../config/app";
+import { validateTxHash } from "../../../utils/validators";
+import { AppContext } from "../../reducers";
+import { setTxStep, setTxError } from "../../actions/txAction";
 
 export default function useTxDebugger(txHash) {
-  const [step, setStep] = useState(1);
-  const [txErrors, setTxErrors] = useState({
-    gasUsed: {
-      name: 'Gas Used',
-      checking: true,
-      error: '',
-      step: 1
-    },
-    gasPrice: {
-      name: 'Gas Price',
-      checking: false,
-      error: '',
-      step: 2
-    },
-    etherValue: {
-      name: 'Ether Value',
-      checking: false,
-      error: '',
-      step: 3
-    },
-    allowance: {
-      name: 'Allowance',
-      checking: false,
-      error: '',
-      step: 4
-    },
-    balance: {
-      name: 'Balance',
-      checking: false,
-      error: '',
-      step: 5
-    },
-    etherAmount: {
-      name: 'Ether Amount',
-      checking: false,
-      error: '',
-      step: 6
-    },
-    userCap: {
-      name: 'User Cap',
-      checking: false,
-      error: '',
-      step: 7
-    },
-    rate: {
-      name: 'Rate',
-      checking: false,
-      error: '',
-      step: 8
-    }
-  });
+  const { tx, txDispatch } = useContext(AppContext);
 
   useEffect(() => {
+    function verifyTxHash() {
+      txDispatch(setTxStep(tx.errors.tx.step));
+      if (!validateTxHash(txHash)) {
+        txDispatch(setTxError('tx', 'Your transaction hash is invalid.'));
+        return false;
+      }
+
+      txDispatch(setTxError('tx', ''));
+      return true;
+    }
+
+    async function verifyGasUsed(web3Service, gas) {
+      txDispatch(setTxStep(tx.errors.gasUsed.step));
+      const receipt = await web3Service.txMined(txHash);
+      const transaction = {
+        gasUsed: receipt.gasUsed,
+        status: receipt.status,
+        gas: gas
+      };
+
+      if ((!transaction.status || transaction.status === "0x0") && !transaction.gas && (transaction.gasUsed / transaction.gas >= 0.95)) {
+        txDispatch(setTxError('gasUsed', 'The transaction is run out of Gas.'));
+        return false;
+      }
+
+      txDispatch(setTxError('gasUsed', ''));
+      return true;
+    }
+
+    function verifyEtherValue(txValue) {
+      txDispatch(setTxStep(tx.errors.etherValue.step));
+      if (calculators.compareTwoNumber(txValue, 0) === 1) {
+        txDispatch(setTxError('etherValue', 'Sending ETH as a value while trading a token to ETH.'));
+        return false;
+      }
+
+      txDispatch(setTxError('etherValue', ''));
+      return true;
+    }
+
+    async function verifyAllowance(web3Service, source, txOwner, txBlockNumber, srcAmount) {
+      txDispatch(setTxStep(tx.errors.allowance.step));
+      const remainStr = await web3Service.getAllowanceAtSpecificBlock(source, txOwner, txBlockNumber);
+      if (calculators.compareTwoNumber(remainStr, srcAmount) === -1) {
+        txDispatch(setTxError('allowance', 'The Sender Wallet Allowance is lower than source amount.'));
+        return false;
+      }
+
+      txDispatch(setTxError('allowance', ''));
+      return true;
+    }
+
+    async function verifyBalance(web3Service, source, txOwner, txBlockNumber, srcAmount) {
+      txDispatch(setTxStep(tx.errors.balance.step));
+      const balance = await web3Service.getTokenBalanceAtSpecificBlock(source, txOwner, txBlockNumber);
+      if (calculators.compareTwoNumber(balance, srcAmount) === -1) {
+        txDispatch(setTxError('balance', 'Token Balance is lower than Source Amount.'));
+        return false;
+      }
+
+      txDispatch(setTxError('balance', ''));
+      return true;
+    }
+
+    function verifyEtherAmount(txValue, srcAmount) {
+      txDispatch(setTxStep(tx.errors.etherAmount.step));
+      if (calculators.compareTwoNumber(txValue, srcAmount) !== 0) {
+        txDispatch(setTxError('etherAmount', 'The Transaction did not contain the exact amount of ETH.'));
+        return false;
+      }
+
+      txDispatch(setTxError('etherAmount', ''));
+      return true;
+    }
+
+    async function verifyUserCap(web3Service, source, srcAmount, dest, maxDestAmount, txOwner, txBlockNumber) {
+      const amountToCheckCap = source === ETHER_ADDRESS ? srcAmount : dest === ETHER_ADDRESS ? maxDestAmount : false;
+
+      if (amountToCheckCap) {
+        txDispatch(setTxStep(tx.errors.userCap.step));
+        const userCap = await web3Service.getMaxCapAtSpecificBlock(txOwner, txBlockNumber);
+        if (calculators.compareTwoNumber(amountToCheckCap, userCap) === 1) {
+          txDispatch(setTxError('userCap', 'Source Amount exceeds User Cap.'));
+          return false;
+        }
+        txDispatch(setTxError('userCap', ''));
+      }
+
+      return true;
+    }
+
+    async function verifyRate(web3Service,source, dest, srcAmount, txBlockNumber, minConversionRate) {
+      txDispatch(setTxStep(tx.errors.rate.step));
+      const rates = await web3Service.getRateAtSpecificBlock(source, dest, srcAmount, txBlockNumber);
+      if (calculators.compareTwoNumber(rates.expectedPrice, 0) === 0) {
+        txDispatch(setTxError('rate', 'Rate is zero at execution time.'));
+        return false;
+      } else if (calculators.compareTwoNumber(minConversionRate, rates.expectedPrice) === 1) {
+        txDispatch(setTxError('rate', 'Min Rate is too high.'));
+        return false;
+      }
+
+      txDispatch(setTxError('rate', ''));
+      return true;
+    }
+
+    async function verifyTradeFunction(web3Service, txInput) {
+      const tradeData = await web3Service.exactTradeData(txInput);
+
+      if (!tradeData) {
+        txDispatch(setTxError('tradeFunction', 'The transaction is not calling Kyber trading function.'));
+        return false;
+      }
+
+      txDispatch(setTxError('tradeFunction', ''));
+      return tradeData;
+    }
+
+    async function verifyGasPrice(web3Service, txBlockNumber, txGasPrice) {
+      txDispatch(setTxStep(tx.errors.gasPrice.step));
+      const gasCap = await web3Service.wrapperGetGasCap(txBlockNumber);
+
+      if (calculators.compareTwoNumber(txGasPrice, gasCap) === 1) {
+        txDispatch(setTxError('gasPrice', 'Gas Price exceeds Gas Limit.'));
+        return false;
+      }
+
+      txDispatch(setTxError('gasPrice', ''));
+      return true;
+    }
+
     async function debugTxHash() {
       try {
+        if (!verifyTxHash()) return;
+
         const web3Service = new Web3Service();
+
+        txDispatch(setTxStep(tx.errors.tradeFunction.step));
         const txData = await web3Service.getTx(txHash);
         const txValue = txData.value;
         const txOwner = txData.from;
@@ -67,131 +155,41 @@ export default function useTxDebugger(txHash) {
         const txBlockNumber = txData.blockNumber;
         const txInput = txData.input;
 
-        const tradeData = await web3Service.exactTradeData(txInput);
+        const tradeData = await verifyTradeFunction(web3Service, txInput);
+
+        if (!tradeData) return;
+
         const source = tradeData[0].value;
         const srcAmount = tradeData[1].value;
         const dest = tradeData[2].value;
         const maxDestAmount = tradeData[4].value;
         const minConversionRate = tradeData[5].value;
-        // const destAddress = tradeData[3].value;
-        // const walletID = tradeData[6].value;
 
-        // const reserves = await web3Service.getListReserve();
-        const receipt = await web3Service.txMined(txHash);
+        await verifyGasUsed(web3Service, txData.gas);
 
-        const transaction = {
-          gasUsed: receipt.gasUsed,
-          status: receipt.status,
-          gas: txData.gas
-        };
-
-        setStep(txErrors.gasUsed.step);
-        const gasCap = await web3Service.wrapperGetGasCap(txBlockNumber);
-
-        if (!transaction.status || transaction.status === "0x0") {
-          if (transaction.gas !== 0 && (transaction.gasUsed / transaction.gas >= 0.95)) {
-            setTxErrors({
-              ...txErrors,
-              gasUsed: {...txErrors.gasUsed, checking: false, error: 'The TX is run out of Gas.'}
-            });
-          }
-        }
-
-        setStep(txErrors.gasPrice.step);
-        if (calculators.compareTwoNumber(txGasPrice, gasCap) === 1) {
-          setTxErrors({
-            ...txErrors,
-            gasPrice: {...txErrors.gasPrice, checking: false, error: 'Gas Price exceeds Gas Limit.'}
-          });
-        }
+        await verifyGasPrice(web3Service, txBlockNumber, txGasPrice);
 
         if (source !== ETHER_ADDRESS) {
-          setStep(txErrors.etherValue.step);
-          if (calculators.compareTwoNumber(txValue, 0) === 1) {
-            setTxErrors({
-              ...txErrors,
-              etherValue: {...txErrors.etherValue, checking: false, error: 'Sending ETH as a value while trading a token to ETH.'}
-            });
-          }
-
-          setStep(txErrors.allowance.step);
-          const remainStr = await web3Service.getAllowanceAtSpecificBlock(source, txOwner, txBlockNumber);
-
-          if (calculators.compareTwoNumber(remainStr, srcAmount) === -1) {
-            setTxErrors({
-              ...txErrors,
-              allowance: {...txErrors.allowance, checking: false, error: 'The Wallet Allowance is lower than Source Amount.'}
-            });
-          }
-
-          setStep(txErrors.balance.step);
-          const balance = await web3Service.getTokenBalanceAtSpecificBlock(source, txOwner, txBlockNumber);
-
-          if (calculators.compareTwoNumber(balance, srcAmount) === -1) {
-            setTxErrors({
-              ...txErrors,
-              balance: {...txErrors.balance, checking: false, error: 'Token Balance is lower than Source Amount.'}
-            });
-          }
+          verifyEtherValue(txValue);
+          await verifyAllowance(web3Service, source, txOwner, txBlockNumber, srcAmount);
+          await verifyBalance(web3Service, source, txOwner, txBlockNumber, srcAmount);
         } else {
-          setStep(txErrors.etherAmount.step);
-          if (calculators.compareTwoNumber(txValue, srcAmount) !== 0) {
-            setTxErrors({
-              ...txErrors,
-              etherAmount: {...txErrors.etherAmount, checking: false, error: 'User did not send the exact amount of ETH.'}
-            });
-          }
+          verifyEtherAmount(txValue, srcAmount);
         }
 
-        if (source === ETHER_ADDRESS) {
-          setStep(txErrors.userCap.step);
-          const userCap = await web3Service.getMaxCapAtSpecificBlock(txOwner, txBlockNumber);
-
-          if (calculators.compareTwoNumber(srcAmount, userCap) === 1) {
-            setTxErrors({
-              ...txErrors,
-              userCap: {...txErrors.userCap, checking: false, error: 'Source amount exceed User Cap.'}
-            });
-          }
-        }
-
-        if (dest === ETHER_ADDRESS) {
-          setStep(txErrors.userCap.step);
-          const userCap = await web3Service.getMaxCapAtSpecificBlock(txOwner, txBlockNumber);
-
-          if (calculators.compareTwoNumber(maxDestAmount, userCap) === 1) {
-            setTxErrors({
-              ...txErrors,
-              userCap: {...txErrors.userCap, checking: false, error: 'Source amount exceed User Cap.'}
-            });
-          }
-        }
-
-        setStep(txErrors.rate.step);
-        const rates = await web3Service.getRateAtSpecificBlock(source, dest, srcAmount, txBlockNumber);
-
-        if (calculators.compareTwoNumber(rates.expectedPrice, 0) === 0) {
-          setTxErrors({
-            ...txErrors,
-            rate: {...txErrors.rate, checking: false, error: 'Rate is zero at execution time.'}
-          });
-        } else {
-          if (calculators.compareTwoNumber(minConversionRate, rates.expectedPrice) === 1) {
-            setTxErrors({
-              ...txErrors,
-              rate: {...txErrors.rate, checking: false, error: 'Min Rate is too high.'}
-            });
-          }
-        }
+        await verifyUserCap(web3Service, source, srcAmount, dest, maxDestAmount, txOwner, txBlockNumber);
+        await verifyRate(web3Service, source, dest, srcAmount, txBlockNumber, minConversionRate);
       } catch (error) {
         console.log(error);
       }
 
-      setStep(0);
+      txDispatch(setTxStep(0));
     }
 
     debugTxHash();
+
+    // eslint-disable-next-line
   }, [txHash]);
 
-  return [step, txErrors];
+  return null;
 }

@@ -26,8 +26,18 @@ export default class Web3Service {
     return new Promise((resolve, reject) => {
       try {
         const tradeAbi = this.getAbiByName("tradeWithHint", KYBER_NETWORK_ABI);
-        const decoded = this.decodeMethod(tradeAbi, data);
-        resolve(decoded.params);
+        let decoded = this.decodeMethod(tradeAbi, data);
+
+        if (!decoded) {
+          const tradeAbi = this.getAbiByName("trade", KYBER_NETWORK_ABI);
+          decoded = this.decodeMethod(tradeAbi, data);
+        }
+
+        if (decoded) {
+          resolve(decoded.params);
+        } else {
+          resolve(false);
+        }
       } catch (e) {
         reject(e);
       }

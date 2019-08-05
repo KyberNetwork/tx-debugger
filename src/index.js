@@ -1,32 +1,13 @@
 import React from 'react';
-import createSagaMiddleware from 'redux-saga';
 import { render } from 'react-dom';
-import { createStore, applyMiddleware } from 'redux';
-import { Provider } from 'react-redux';
-import { logger } from 'redux-logger';
-import reducer from './app/reducers';
 import App from './app/components/App';
 import Error from './app/components/layouts/Error';
-import rootSaga from './app/sagas';
 import * as serviceWorker from './serviceWorker';
 import { Route, Redirect, Switch, BrowserRouter as Router } from 'react-router-dom'
-
-const sagaMiddleware = createSagaMiddleware();
-let middleware = [sagaMiddleware];
-
-if (process.env.REACT_APP_ENV === 'development') {
-  middleware = [...middleware, logger]
-}
-
-const store = createStore(
-  reducer,
-  applyMiddleware(...middleware),
-);
-
-sagaMiddleware.run(rootSaga);
+import {AppProvider} from "./app/reducers";
 
 const routing = (
-  <Provider store={store}>
+  <AppProvider>
     <Router>
       <div>
         <Switch>
@@ -36,7 +17,7 @@ const routing = (
         </Switch>
       </div>
     </Router>
-  </Provider>
+  </AppProvider>
 );
 
 render(routing, document.getElementById('root'));

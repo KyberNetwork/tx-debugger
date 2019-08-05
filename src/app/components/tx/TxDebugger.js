@@ -1,33 +1,39 @@
-import React from 'react';
+import React, {useContext} from 'react';
 import useTxDebugger from "./TxDebuggerHook";
+import { AppContext } from "../../reducers";
 
 export default function TxDebugger(props) {
+  useTxDebugger(props.txHash);
+
   let bugCount = 0;
-  const [step, txErrors] = useTxDebugger(props.txHash);
+  const { tx } = useContext(AppContext);
 
   function renderDebugTerminal() {
+    console.log(tx);
+
     return (
       <div>
         <div className={"tx-debugger__text tx-debugger__text--white"}>Debugging...</div>
-        {Object.entries(txErrors).map((value, key) => {
-          const txError = value[1];
+
+        {Object.entries(tx.errors).map((value, key) => {
+          const error = value[1];
 
           return (
             <div key={key}>
-              {(step >= txError.step || step === 0) && (
-                <div className={"tx-debugger__text"}>Checking {txError.name}...</div>
+              {(tx.currentStep >= error.step || tx.currentStep === 0) && (
+                <div className={"tx-debugger__text"}>Checking {error.name}...</div>
               )}
 
-              {(step > txError.step || step === 0) && (
-                <div className={`tx-debugger__text tx-debugger__text--${txError.error ? 'red' : 'green'}`}>
-                  Done checking {txError.name}.
-                </div>
+              {error.isChecked && (
+              <div className={`tx-debugger__text tx-debugger__text--${error.error ? 'red' : 'green'}`}>
+                Done checking {error.name}.
+              </div>
               )}
             </div>
           )
         })}
 
-        {step === 0 && (
+        {tx.currentStep === 0 && (
           <div className={"tx-debugger__text tx-debugger__text--white"}>Done Debugging.</div>
         )}
       </div>
@@ -46,13 +52,16 @@ export default function TxDebugger(props) {
       <div className={"tx-debugger__box tx-debugger__summary"}>
         <div className={"tx-debugger__header"}>Bug Summary</div>
         <div className={"tx-debugger__content"}>
-          {Object.entries(txErrors).map((value, key) => {
-            if (value[1].error) {
+          {Object.entries(tx.errors).map((value, key) => {
+            const error = value[1].error;
+
+            if (error) {
               bugCount++;
+
               return (
                 <div key={key} className={"tx-debugger__item"}>
                   <span className={"tx-debugger__number"}>{bugCount}</span>
-                  <span className={"tx-debugger__bug"}>{value[1].error}</span>
+                  <span className={"tx-debugger__bug"}>{error}</span>
                 </div>
               )
             }
