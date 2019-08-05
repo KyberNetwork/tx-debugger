@@ -1,6 +1,7 @@
 import { txActionTypes } from '../actions/txAction';
 
 export const initialTxState = {
+  isDebuggingCompleted: false,
   currentStep: 1,
   errors: {
     tx: {
@@ -82,6 +83,12 @@ export function txReducer(state, action) {
       return {
         ...state,
         currentStep: action.payload
+      }
+    }
+    case txActionTypes.SET_TX_DEBUGGING_COMPLETED: {
+      return {
+        ...state,
+        isDebuggingCompleted: action.payload
       }
     }
     default:

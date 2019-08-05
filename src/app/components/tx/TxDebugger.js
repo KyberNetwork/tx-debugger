@@ -18,20 +18,20 @@ export default function TxDebugger(props) {
 
           return (
             <div key={key}>
-              {(tx.currentStep >= error.step || tx.currentStep === 0) && (
+              {(tx.currentStep >= error.step) && (
                 <div className={"tx-debugger__text"}>Checking {error.name}...</div>
               )}
 
               {error.isChecked && (
-              <div className={`tx-debugger__text tx-debugger__text--${error.error ? 'red' : 'green'}`}>
-                Done checking {error.name}.
-              </div>
+                <div className={`tx-debugger__text tx-debugger__text--${error.error ? 'red' : 'green'}`}>
+                  Done checking {error.name}.
+                </div>
               )}
             </div>
           )
         })}
 
-        {tx.currentStep === 0 && (
+        {tx.isDebuggingCompleted && (
           <div className={"tx-debugger__text tx-debugger__text--white"}>Done Debugging.</div>
         )}
       </div>

@@ -4,7 +4,7 @@ import * as calculators from "../../../utils/calculators";
 import { ETHER_ADDRESS } from "../../../config/app";
 import { validateTxHash } from "../../../utils/validators";
 import { AppContext } from "../../reducers";
-import { setTxStep, setTxError } from "../../actions/txAction";
+import { setTxStep, setTxError, setTxDebuggingCompleted } from "../../actions/txAction";
 
 export default function useTxDebugger(txHash) {
   const { tx, txDispatch } = useContext(AppContext);
@@ -143,7 +143,10 @@ export default function useTxDebugger(txHash) {
 
     async function debugTxHash() {
       try {
-        if (!verifyTxHash()) return;
+        if (!verifyTxHash()) {
+          txDispatch(setTxDebuggingCompleted());
+          return;
+        }
 
         const web3Service = new Web3Service();
 
@@ -157,7 +160,10 @@ export default function useTxDebugger(txHash) {
 
         const tradeData = await verifyTradeFunction(web3Service, txInput);
 
-        if (!tradeData) return;
+        if (!tradeData) {
+          txDispatch(setTxDebuggingCompleted());
+          return;
+        }
 
         const source = tradeData[0].value;
         const srcAmount = tradeData[1].value;
@@ -174,6 +180,9 @@ export default function useTxDebugger(txHash) {
           await verifyAllowance(web3Service, source, txOwner, txBlockNumber, srcAmount);
           await verifyBalance(web3Service, source, txOwner, txBlockNumber, srcAmount);
         } else {
+          txDispatch(setTxError('etherValue', ''));
+          txDispatch(setTxError('allowance', ''));
+          txDispatch(setTxError('balance', ''));
           verifyEtherAmount(txValue, srcAmount);
         }
 
@@ -183,7 +192,7 @@ export default function useTxDebugger(txHash) {
         console.log(error);
       }
 
-      txDispatch(setTxStep(0));
+      txDispatch(setTxDebuggingCompleted());
     }
 
     debugTxHash();
