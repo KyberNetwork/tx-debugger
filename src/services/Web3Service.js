@@ -16,7 +16,7 @@ export default class Web3Service {
         if (result != null) {
           resolve(result);
         } else {
-          rejected(new Error("Cannot get tx hash"));
+          resolve(false);
         }
       })
     })

@@ -16,3 +16,9 @@
     transform: scale(1) rotate(180deg);
   }
 }
+
+@keyframes typing {
+  to {
+    opacity: 1;
+  }
+}

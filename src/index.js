@@ -4,7 +4,7 @@ import App from './app/components/App';
 import Error from './app/components/layouts/Error';
 import * as serviceWorker from './serviceWorker';
 import { Route, Redirect, Switch, BrowserRouter as Router } from 'react-router-dom'
-import {AppProvider} from "./app/reducers";
+import { AppProvider } from "./app/reducers";
 
 const routing = (
   <AppProvider>

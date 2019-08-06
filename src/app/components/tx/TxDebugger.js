@@ -8,10 +8,18 @@ export default function TxDebugger(props) {
   let bugCount = 0;
   const { tx } = useContext(AppContext);
 
+  function animateText(text) {
+    const characters = text.split('');
+
+    return characters.map((character, index) => {
+      return <span key={index} className={"common__typing-text"}>{character}</span>;
+    });
+  }
+
   function renderDebugTerminal() {
     return (
       <div>
-        <div className={"tx-debugger__text tx-debugger__text--white"}>Debugging...</div>
+        <div className={"tx-debugger__text tx-debugger__text--white"}>{animateText('Debugging...')}</div>
 
         {Object.entries(tx.errors).map((value, key) => {
           const error = value[1];
@@ -19,12 +27,12 @@ export default function TxDebugger(props) {
           return (
             <div key={key}>
               {(tx.currentStep >= error.step) && (
-                <div className={"tx-debugger__text"}>Checking {error.name}...</div>
+                <div className={"tx-debugger__text"}>{animateText(`Checking ${error.name}...`)}</div>
               )}
 
               {error.isChecked && (
                 <div className={`tx-debugger__text tx-debugger__text--${error.error ? 'red' : 'green'}`}>
-                  Done checking {error.name}.
+                  {animateText(`Done checking ${error.name}.`)}
                 </div>
               )}
             </div>
@@ -32,7 +40,7 @@ export default function TxDebugger(props) {
         })}
 
         {tx.isDebuggingCompleted && (
-          <div className={"tx-debugger__text tx-debugger__text--white"}>Done Debugging.</div>
+          <div className={"tx-debugger__text tx-debugger__text--white"}>{animateText(`Done Debugging.`)}</div>
         )}
       </div>
     );
@@ -66,6 +74,12 @@ export default function TxDebugger(props) {
 
             return '';
           })}
+
+          {(tx.isDebuggingCompleted && !bugCount) && (
+            <div className={"tx-debugger__item"}>
+              <span className={"tx-debugger__bug"}>Everything seems to be OK</span>
+            </div>
+          )}
         </div>
       </div>
     </div>

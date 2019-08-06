@@ -10,10 +10,72 @@ export default function useTxDebugger(txHash) {
   const { tx, txDispatch } = useContext(AppContext);
 
   useEffect(() => {
+    async function debugTxHash() {
+      try {
+        if (!verifyTxHash()) return;
+
+        const web3Service = new Web3Service();
+
+        const txData = await verifyValidTransaction(web3Service);
+        if (!txData) return;
+
+        const txValue = txData.value;
+        const txOwner = txData.from;
+        const txGasPrice = txData.gasPrice;
+        const txBlockNumber = txData.blockNumber;
+        const txInput = txData.input;
+
+        const tradeData = await verifyTradeFunction(web3Service, txInput);
+        if (!tradeData) return;
+
+        const source = tradeData[0].value;
+        const srcAmount = tradeData[1].value;
+        const dest = tradeData[2].value;
+        const maxDestAmount = tradeData[4].value;
+        const minConversionRate = tradeData[5].value;
+
+        await verifyGasUsed(web3Service, txData.gas);
+        await verifyGasPrice(web3Service, txBlockNumber, txGasPrice);
+
+        if (source !== ETHER_ADDRESS) {
+          verifyEtherValue(txValue);
+          await verifyAllowance(web3Service, source, txOwner, txBlockNumber, srcAmount);
+          await verifyBalance(web3Service, source, txOwner, txBlockNumber, srcAmount);
+        } else {
+          txDispatch(setTxError('etherValue', ''));
+          txDispatch(setTxError('allowance', ''));
+          txDispatch(setTxError('balance', ''));
+          verifyEtherAmount(txValue, srcAmount);
+        }
+
+        await verifyUserCap(web3Service, source, srcAmount, dest, maxDestAmount, txOwner, txBlockNumber);
+        await verifyRate(web3Service, source, dest, srcAmount, txBlockNumber, minConversionRate);
+      } catch (error) {
+        console.log(error);
+      }
+
+      txDispatch(setTxDebuggingCompleted());
+    }
+
+    async function verifyValidTransaction(web3Service) {
+      txDispatch(setTxStep(tx.errors.txNotFound.step));
+      const txData = await web3Service.getTx(txHash);
+
+      if (!txData) {
+        txDispatch(setTxError('txNotFound', 'Cannot fetch the Transaction.'));
+        txDispatch(setTxDebuggingCompleted());
+        return false
+      }
+
+      txDispatch(setTxError('txNotFound', ''));
+      return txData;
+    }
+
     function verifyTxHash() {
       txDispatch(setTxStep(tx.errors.tx.step));
       if (!validateTxHash(txHash)) {
         txDispatch(setTxError('tx', 'Your transaction hash is invalid.'));
+        txDispatch(setTxDebuggingCompleted());
         return false;
       }
 
@@ -30,8 +92,8 @@ export default function useTxDebugger(txHash) {
         gas: gas
       };
 
-      if ((!transaction.status || transaction.status === "0x0") && !transaction.gas && (transaction.gasUsed / transaction.gas >= 0.95)) {
-        txDispatch(setTxError('gasUsed', 'The transaction is run out of Gas.'));
+      if ((!transaction.status || transaction.status === "0x0") && (transaction.gas !== 0 && (transaction.gasUsed / transaction.gas >= 0.95))) {
+        txDispatch(setTxError('gasUsed', 'The Transaction is run out of Gas.'));
         return false;
       }
 
@@ -104,23 +166,32 @@ export default function useTxDebugger(txHash) {
     async function verifyRate(web3Service,source, dest, srcAmount, txBlockNumber, minConversionRate) {
       txDispatch(setTxStep(tx.errors.rate.step));
       const rates = await web3Service.getRateAtSpecificBlock(source, dest, srcAmount, txBlockNumber);
+
       if (calculators.compareTwoNumber(rates.expectedPrice, 0) === 0) {
         txDispatch(setTxError('rate', 'Rate is zero at execution time.'));
+        txDispatch(setTxError('minRate', ''));
         return false;
-      } else if (calculators.compareTwoNumber(minConversionRate, rates.expectedPrice) === 1) {
-        txDispatch(setTxError('rate', 'Min Rate is too high.'));
+      }
+
+      txDispatch(setTxStep(tx.errors.minRate.step));
+      if (calculators.compareTwoNumber(minConversionRate, rates.expectedPrice) === 1) {
+        txDispatch(setTxError('minRate', 'The Transaction Min Conversion Rate is higher than Execution Rate.'));
+        txDispatch(setTxError('rate', ''));
         return false;
       }
 
       txDispatch(setTxError('rate', ''));
+      txDispatch(setTxError('minRate', ''));
       return true;
     }
 
     async function verifyTradeFunction(web3Service, txInput) {
+      txDispatch(setTxStep(tx.errors.tradeFunction.step));
       const tradeData = await web3Service.exactTradeData(txInput);
 
       if (!tradeData) {
-        txDispatch(setTxError('tradeFunction', 'The transaction is not calling Kyber trading function.'));
+        txDispatch(setTxError('tradeFunction', 'The Transaction is not calling Kyber Trading Function.'));
+        txDispatch(setTxDebuggingCompleted());
         return false;
       }
 
@@ -139,60 +210,6 @@ export default function useTxDebugger(txHash) {
 
       txDispatch(setTxError('gasPrice', ''));
       return true;
-    }
-
-    async function debugTxHash() {
-      try {
-        if (!verifyTxHash()) {
-          txDispatch(setTxDebuggingCompleted());
-          return;
-        }
-
-        const web3Service = new Web3Service();
-
-        txDispatch(setTxStep(tx.errors.tradeFunction.step));
-        const txData = await web3Service.getTx(txHash);
-        const txValue = txData.value;
-        const txOwner = txData.from;
-        const txGasPrice = txData.gasPrice;
-        const txBlockNumber = txData.blockNumber;
-        const txInput = txData.input;
-
-        const tradeData = await verifyTradeFunction(web3Service, txInput);
-
-        if (!tradeData) {
-          txDispatch(setTxDebuggingCompleted());
-          return;
-        }
-
-        const source = tradeData[0].value;
-        const srcAmount = tradeData[1].value;
-        const dest = tradeData[2].value;
-        const maxDestAmount = tradeData[4].value;
-        const minConversionRate = tradeData[5].value;
-
-        await verifyGasUsed(web3Service, txData.gas);
-
-        await verifyGasPrice(web3Service, txBlockNumber, txGasPrice);
-
-        if (source !== ETHER_ADDRESS) {
-          verifyEtherValue(txValue);
-          await verifyAllowance(web3Service, source, txOwner, txBlockNumber, srcAmount);
-          await verifyBalance(web3Service, source, txOwner, txBlockNumber, srcAmount);
-        } else {
-          txDispatch(setTxError('etherValue', ''));
-          txDispatch(setTxError('allowance', ''));
-          txDispatch(setTxError('balance', ''));
-          verifyEtherAmount(txValue, srcAmount);
-        }
-
-        await verifyUserCap(web3Service, source, srcAmount, dest, maxDestAmount, txOwner, txBlockNumber);
-        await verifyRate(web3Service, source, dest, srcAmount, txBlockNumber, minConversionRate);
-      } catch (error) {
-        console.log(error);
-      }
-
-      txDispatch(setTxDebuggingCompleted());
     }
 
     debugTxHash();
