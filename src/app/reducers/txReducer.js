@@ -22,59 +22,65 @@ export const initialTxState = {
       error: '',
       step: 3
     },
+    sourceAmount: {
+      name: 'Source Amount',
+      isChecked: false,
+      error: '',
+      step: 4
+    },
     gasUsed: {
       name: 'Gas Used',
       isChecked: false,
       error: '',
-      step: 4
+      step: 5
     },
     gasPrice: {
       name: 'Gas Price',
       isChecked: false,
       error: '',
-      step: 5
+      step: 6
     },
     etherValue: {
-      name: 'Ether Value',
+      name: 'ETH Value',
       isChecked: false,
       error: '',
-      step: 6
+      step: 7
     },
     allowance: {
       name: 'Allowance',
       isChecked: false,
       error: '',
-      step: 7
+      step: 8
     },
     balance: {
       name: 'Balance',
       isChecked: false,
       error: '',
-      step: 8
+      step: 9
     },
     etherAmount: {
-      name: 'Ether Amount',
+      name: 'ETH Amount',
       isChecked: false,
       error: '',
-      step: 9
+      step: 10
     },
     userCap: {
       name: 'User Cap',
       isChecked: false,
       error: '',
-      step: 10
+      step: 11
     },
     rate: {
       name: 'Rate',
       isChecked: false,
       error: '',
-      step: 11
+      step: 12
     },
     minRate: {
       name: 'Min Conversion Rate',
       isChecked: false,
       error: '',
-      step: 12
+      step: 13
     }
   },
 };
@@ -89,6 +95,12 @@ export function txReducer(state, action) {
           ...state.errors,
           [key]: { ...state.errors[key], error, isChecked }
         }
+      }
+    }
+    case txActionTypes.SET_TX_UNKNOWN_ERROR: {
+      return {
+        ...state,
+        unknownError: action.payload
       }
     }
     case txActionTypes.SET_TX_STEP: {

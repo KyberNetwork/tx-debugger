@@ -16,6 +16,13 @@ export default function useTxDebugger(txHash) {
 
         const web3Service = new Web3Service();
 
+        const receipt = await web3Service.txMined(txHash);
+
+        if (receipt.status) {
+          txDispatch(setTxDebuggingCompleted());
+          return;
+        }
+
         const txData = await verifyValidTransaction(web3Service);
         if (!txData) return;
 
@@ -34,13 +41,15 @@ export default function useTxDebugger(txHash) {
         const maxDestAmount = tradeData[4].value;
         const minConversionRate = tradeData[5].value;
 
-        await verifyGasUsed(web3Service, txData.gas);
+        verifySourceAmount(srcAmount);
+        verifyGasUsed(web3Service, receipt, txData.gas);
         await verifyGasPrice(web3Service, txBlockNumber, txGasPrice);
 
         if (source !== ETHER_ADDRESS) {
           verifyEtherValue(txValue);
           await verifyAllowance(web3Service, source, txOwner, txBlockNumber, srcAmount);
           await verifyBalance(web3Service, source, txOwner, txBlockNumber, srcAmount);
+          txDispatch(setTxError('etherAmount', ''));
         } else {
           txDispatch(setTxError('etherValue', ''));
           txDispatch(setTxError('allowance', ''));
@@ -58,17 +67,22 @@ export default function useTxDebugger(txHash) {
     }
 
     async function verifyValidTransaction(web3Service) {
-      txDispatch(setTxStep(tx.errors.txNotFound.step));
-      const txData = await web3Service.getTx(txHash);
+      try {
+        txDispatch(setTxStep(tx.errors.txNotFound.step));
+        const txData = await web3Service.getTx(txHash);
 
-      if (!txData) {
-        txDispatch(setTxError('txNotFound', 'Cannot fetch the Transaction.'));
-        txDispatch(setTxDebuggingCompleted());
-        return false
+        if (!txData) {
+          txDispatch(setTxError('txNotFound', 'The Transaction cannot be found.'));
+          txDispatch(setTxDebuggingCompleted());
+          return false
+        }
+
+        txDispatch(setTxError('txNotFound', ''));
+        return txData;
+      } catch (e) {
+        console.log(e);
+        return setStateOnError('txNotFound');
       }
-
-      txDispatch(setTxError('txNotFound', ''));
-      return txData;
     }
 
     function verifyTxHash() {
@@ -83,9 +97,9 @@ export default function useTxDebugger(txHash) {
       return true;
     }
 
-    async function verifyGasUsed(web3Service, gas) {
+    function verifyGasUsed(web3Service, receipt, gas) {
       txDispatch(setTxStep(tx.errors.gasUsed.step));
-      const receipt = await web3Service.txMined(txHash);
+
       const transaction = {
         gasUsed: receipt.gasUsed,
         status: receipt.status,
@@ -113,31 +127,42 @@ export default function useTxDebugger(txHash) {
     }
 
     async function verifyAllowance(web3Service, source, txOwner, txBlockNumber, srcAmount) {
-      txDispatch(setTxStep(tx.errors.allowance.step));
-      const remainStr = await web3Service.getAllowanceAtSpecificBlock(source, txOwner, txBlockNumber);
-      if (calculators.compareTwoNumber(remainStr, srcAmount) === -1) {
-        txDispatch(setTxError('allowance', 'The Sender Wallet Allowance is lower than source amount.'));
-        return false;
-      }
+      try {
+        txDispatch(setTxStep(tx.errors.allowance.step));
+        const remainStr = await web3Service.getAllowanceAtSpecificBlock(source, txOwner, txBlockNumber);
+        if (calculators.compareTwoNumber(remainStr, srcAmount) === -1) {
+          txDispatch(setTxError('allowance', 'The Sender Wallet Allowance is lower than source amount.'));
+          return false;
+        }
 
-      txDispatch(setTxError('allowance', ''));
-      return true;
+        txDispatch(setTxError('allowance', ''));
+        return true;
+      } catch (e) {
+        console.log(e);
+        return setStateOnError('allowance');
+      }
     }
 
     async function verifyBalance(web3Service, source, txOwner, txBlockNumber, srcAmount) {
-      txDispatch(setTxStep(tx.errors.balance.step));
-      const balance = await web3Service.getTokenBalanceAtSpecificBlock(source, txOwner, txBlockNumber);
-      if (calculators.compareTwoNumber(balance, srcAmount) === -1) {
-        txDispatch(setTxError('balance', 'Token Balance is lower than Source Amount.'));
-        return false;
-      }
+      try {
+        txDispatch(setTxStep(tx.errors.balance.step));
+        const balance = await web3Service.getTokenBalanceAtSpecificBlock(source, txOwner, txBlockNumber);
+        if (calculators.compareTwoNumber(balance, srcAmount) === -1) {
+          txDispatch(setTxError('balance', 'Token Balance is lower than Source Amount.'));
+          return false;
+        }
 
-      txDispatch(setTxError('balance', ''));
-      return true;
+        txDispatch(setTxError('balance', ''));
+        return true;
+      } catch (e) {
+        console.log(e);
+        return setStateOnError('balance');
+      }
     }
 
     function verifyEtherAmount(txValue, srcAmount) {
       txDispatch(setTxStep(tx.errors.etherAmount.step));
+
       if (calculators.compareTwoNumber(txValue, srcAmount) !== 0) {
         txDispatch(setTxError('etherAmount', 'The Transaction did not contain the exact amount of ETH.'));
         return false;
@@ -148,68 +173,108 @@ export default function useTxDebugger(txHash) {
     }
 
     async function verifyUserCap(web3Service, source, srcAmount, dest, maxDestAmount, txOwner, txBlockNumber) {
-      const amountToCheckCap = source === ETHER_ADDRESS ? srcAmount : dest === ETHER_ADDRESS ? maxDestAmount : false;
-
-      if (amountToCheckCap) {
+      try {
         txDispatch(setTxStep(tx.errors.userCap.step));
-        const userCap = await web3Service.getMaxCapAtSpecificBlock(txOwner, txBlockNumber);
-        if (calculators.compareTwoNumber(amountToCheckCap, userCap) === 1) {
-          txDispatch(setTxError('userCap', 'Source Amount exceeds User Cap.'));
-          return false;
-        }
-        txDispatch(setTxError('userCap', ''));
-      }
 
-      return true;
+        const amountToCheckCap = source === ETHER_ADDRESS ? srcAmount : dest === ETHER_ADDRESS ? maxDestAmount : false;
+
+        if (amountToCheckCap) {
+          const userCap = await web3Service.getMaxCapAtSpecificBlock(txOwner, txBlockNumber);
+          if (calculators.compareTwoNumber(amountToCheckCap, userCap) === 1) {
+            txDispatch(setTxError('userCap', 'Source Amount exceeds User Cap.'));
+            return false;
+          }
+        }
+
+        txDispatch(setTxError('userCap', ''));
+        return true;
+      } catch (e) {
+        console.log(e);
+        return setStateOnError('userCap');
+      }
     }
 
     async function verifyRate(web3Service,source, dest, srcAmount, txBlockNumber, minConversionRate) {
-      txDispatch(setTxStep(tx.errors.rate.step));
-      const rates = await web3Service.getRateAtSpecificBlock(source, dest, srcAmount, txBlockNumber);
+      try {
+        txDispatch(setTxStep(tx.errors.rate.step));
+        const rates = await web3Service.getRateAtSpecificBlock(source, dest, srcAmount, txBlockNumber);
 
-      if (calculators.compareTwoNumber(rates.expectedPrice, 0) === 0) {
-        txDispatch(setTxError('rate', 'Rate is zero at execution time.'));
-        txDispatch(setTxError('minRate', ''));
-        return false;
-      }
+        if (calculators.compareTwoNumber(rates.expectedPrice, 0) === 0) {
+          txDispatch(setTxError('rate', 'Rate is zero at execution time.'));
+          return false;
+        }
 
-      txDispatch(setTxStep(tx.errors.minRate.step));
-      if (calculators.compareTwoNumber(minConversionRate, rates.expectedPrice) === 1) {
-        txDispatch(setTxError('minRate', 'The Transaction Min Conversion Rate is higher than Execution Rate.'));
+        txDispatch(setTxStep(tx.errors.minRate.step));
+        if (calculators.compareTwoNumber(minConversionRate, rates.expectedPrice) === 1) {
+          txDispatch(setTxError('minRate', 'The Transaction Min Conversion Rate is higher than Execution Rate.'));
+          txDispatch(setTxError('rate', ''));
+          return false;
+        }
+
         txDispatch(setTxError('rate', ''));
+        txDispatch(setTxError('minRate', ''));
+        return true;
+      } catch (e) {
+        console.log(e);
+        setStateOnError('rate');
+        setStateOnError('minRate');
         return false;
       }
-
-      txDispatch(setTxError('rate', ''));
-      txDispatch(setTxError('minRate', ''));
-      return true;
     }
 
     async function verifyTradeFunction(web3Service, txInput) {
-      txDispatch(setTxStep(tx.errors.tradeFunction.step));
-      const tradeData = await web3Service.exactTradeData(txInput);
+      try {
+        txDispatch(setTxStep(tx.errors.tradeFunction.step));
+        const tradeData = await web3Service.exactTradeData(txInput);
 
-      if (!tradeData) {
-        txDispatch(setTxError('tradeFunction', 'The Transaction is not calling Kyber Trading Function.'));
-        txDispatch(setTxDebuggingCompleted());
-        return false;
+        if (!tradeData) {
+          txDispatch(setTxError('tradeFunction', 'The Transaction is not calling Kyber Trading Function.'));
+          txDispatch(setTxDebuggingCompleted());
+          return false;
+        }
+
+        txDispatch(setTxError('tradeFunction', ''));
+        return tradeData;
+      } catch(e) {
+        console.log(e);
+        return setStateOnError('tradeFunction');
       }
-
-      txDispatch(setTxError('tradeFunction', ''));
-      return tradeData;
     }
 
     async function verifyGasPrice(web3Service, txBlockNumber, txGasPrice) {
-      txDispatch(setTxStep(tx.errors.gasPrice.step));
-      const gasCap = await web3Service.wrapperGetGasCap(txBlockNumber);
+      try {
+        txDispatch(setTxStep(tx.errors.gasPrice.step));
+        const gasCap = await web3Service.wrapperGetGasCap(txBlockNumber);
 
-      if (calculators.compareTwoNumber(txGasPrice, gasCap) === 1) {
-        txDispatch(setTxError('gasPrice', 'Gas Price exceeds Gas Limit.'));
+        if (calculators.compareTwoNumber(txGasPrice, gasCap) === 1) {
+          txDispatch(setTxError('gasPrice', 'Gas Price exceeds Gas Limit.'));
+          return false;
+        }
+
+        txDispatch(setTxError('gasPrice', ''));
+        return true;
+      } catch (e) {
+        console.log(e);
+        return setStateOnError('gasPrice');
+      }
+    }
+
+    function verifySourceAmount(srcAmount) {
+      txDispatch(setTxStep(tx.errors.sourceAmount.step));
+
+      if (calculators.compareTwoNumber(srcAmount, 0) !== 1) {
+        txDispatch(setTxError('sourceAmount', 'Source Amount cannot be zero.'));
         return false;
       }
 
-      txDispatch(setTxError('gasPrice', ''));
+      txDispatch(setTxError('sourceAmount', ''));
       return true;
+    }
+
+    function setStateOnError(key) {
+      txDispatch(setTxError(key, 'Unknown Error: The Transaction can not be debugged since something unexpected, even to us, happens.'));
+      txDispatch(setTxDebuggingCompleted());
+      return false;
     }
 
     debugTxHash();
