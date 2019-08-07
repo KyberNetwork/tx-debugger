@@ -1,6 +1,7 @@
 import React, { useContext } from 'react';
 import useTxDebugger from "./TxDebuggerHook";
 import { AppContext } from "../../reducers";
+import TypingEffect from "../commons/TypingEffect";
 
 export default function TxDebugger(props) {
   useTxDebugger(props.txHash);
@@ -11,7 +12,9 @@ export default function TxDebugger(props) {
   function renderDebugTerminal() {
     return (
       <div>
-        <div className={"tx-debugger__text tx-debugger__text--white"}>Debugging...</div>
+        <div className={"tx-debugger__text tx-debugger__text--white"}>
+          <TypingEffect text="Debugging..."/>
+        </div>
 
         {Object.entries(tx.errors).map((value, key) => {
           const error = value[1];
@@ -30,7 +33,9 @@ export default function TxDebugger(props) {
         })}
 
         {tx.isDebuggingCompleted && (
-          <div className={"tx-debugger__text tx-debugger__text--white"}>Done Debugging.</div>
+          <div className={"tx-debugger__text tx-debugger__text--white"}>
+            <TypingEffect text="Done Debugging."/>
+          </div>
         )}
       </div>
     );

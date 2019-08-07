@@ -58,7 +58,12 @@ export default function useTxDebugger(txHash) {
         }
 
         await verifyUserCap(web3Service, source, srcAmount, dest, maxDestAmount, txOwner, txBlockNumber);
-        await verifyRate(web3Service, source, dest, srcAmount, txBlockNumber, minConversionRate);
+
+        const rates = await verifyRate(web3Service, source, dest, srcAmount, txBlockNumber);
+
+        if (!rates) return;
+
+        verifyMinConversionRate(rates, minConversionRate);
       } catch (error) {
         console.log(error);
       }
@@ -129,9 +134,11 @@ export default function useTxDebugger(txHash) {
     async function verifyAllowance(web3Service, source, txOwner, txBlockNumber, srcAmount) {
       try {
         txDispatch(setTxStep(tx.errors.allowance.step));
+
         const remainStr = await web3Service.getAllowanceAtSpecificBlock(source, txOwner, txBlockNumber);
+
         if (calculators.compareTwoNumber(remainStr, srcAmount) === -1) {
-          txDispatch(setTxError('allowance', 'The Sender Wallet Allowance is lower than source amount.'));
+          txDispatch(setTxError('allowance', 'The Sender Wallet Allowance is lower than Source Amount.'));
           return false;
         }
 
@@ -146,7 +153,9 @@ export default function useTxDebugger(txHash) {
     async function verifyBalance(web3Service, source, txOwner, txBlockNumber, srcAmount) {
       try {
         txDispatch(setTxStep(tx.errors.balance.step));
+
         const balance = await web3Service.getTokenBalanceAtSpecificBlock(source, txOwner, txBlockNumber);
+
         if (calculators.compareTwoNumber(balance, srcAmount) === -1) {
           txDispatch(setTxError('balance', 'Token Balance is lower than Source Amount.'));
           return false;
@@ -194,32 +203,36 @@ export default function useTxDebugger(txHash) {
       }
     }
 
-    async function verifyRate(web3Service,source, dest, srcAmount, txBlockNumber, minConversionRate) {
+    async function verifyRate(web3Service,source, dest, srcAmount, txBlockNumber) {
       try {
         txDispatch(setTxStep(tx.errors.rate.step));
+
         const rates = await web3Service.getRateAtSpecificBlock(source, dest, srcAmount, txBlockNumber);
 
         if (calculators.compareTwoNumber(rates.expectedPrice, 0) === 0) {
           txDispatch(setTxError('rate', 'Rate is zero at execution time.'));
-          return false;
-        }
-
-        txDispatch(setTxStep(tx.errors.minRate.step));
-        if (calculators.compareTwoNumber(minConversionRate, rates.expectedPrice) === 1) {
-          txDispatch(setTxError('minRate', 'The Transaction Min Conversion Rate is higher than Execution Rate.'));
-          txDispatch(setTxError('rate', ''));
+          txDispatch(setTxDebuggingCompleted());
           return false;
         }
 
         txDispatch(setTxError('rate', ''));
-        txDispatch(setTxError('minRate', ''));
-        return true;
+        return rates;
       } catch (e) {
         console.log(e);
-        setStateOnError('rate');
-        setStateOnError('minRate');
+        return setStateOnError('rate');
+      }
+    }
+
+    function verifyMinConversionRate(rates, minConversionRate) {
+      txDispatch(setTxStep(tx.errors.minRate.step));
+
+      if (calculators.compareTwoNumber(minConversionRate, rates.expectedPrice) === 1) {
+        txDispatch(setTxError('minRate', 'The Transaction Min Conversion Rate is higher than Execution Rate.'));
         return false;
       }
+
+      txDispatch(setTxError('minRate', ''));
+      return true;
     }
 
     async function verifyTradeFunction(web3Service, txInput) {
