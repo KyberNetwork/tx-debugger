@@ -4,4 +4,12 @@
     transform: translateY(10px);
     animation: fade-in 0.3s forwards;
   }
+
+  &__blink {
+    font-size: 18px;
+    color: white;
+    display: inline-block;
+    margin-left: 3px;
+    animation: blink 0.5s infinite;
+  }
 }

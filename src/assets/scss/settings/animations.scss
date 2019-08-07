@@ -5,14 +5,16 @@
   }
 }
 
-@keyframes scale-up {
-  to {
-    transform: scale(1);
+@keyframes blink {
+  0% {
+    opacity: 0;
   }
-}
 
-@keyframes scale-up-with-rotating {
-  to {
-    transform: scale(1) rotate(180deg);
+  50% {
+    opacity: 1;
+  }
+
+  100% {
+    opacity: 0;
   }
 }

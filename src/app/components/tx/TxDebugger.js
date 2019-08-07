@@ -22,7 +22,13 @@ export default function TxDebugger(props) {
           return (
             <div key={key}>
                 {(tx.currentStep >= error.step) && (
-                  <div className={"tx-debugger__text"}>Checking {error.name}...</div>
+                  <div className={"tx-debugger__text"}>
+                    <span>Checking {error.name}...</span>
+
+                    {!error.isChecked && (
+                      <span className={"common__blink"}>|</span>
+                    )}
+                  </div>
                 )}
 
                 {error.isChecked && (
