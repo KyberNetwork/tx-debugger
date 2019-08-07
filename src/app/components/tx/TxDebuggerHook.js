@@ -16,15 +16,15 @@ export default function useTxDebugger(txHash) {
 
         const web3Service = new Web3Service();
 
+        const txData = await verifyValidTransaction(web3Service);
+        if (!txData) return;
+
         const receipt = await web3Service.txMined(txHash);
 
-        if (receipt.status) {
+        if (receipt && receipt.status) {
           txDispatch(setTxDebuggingCompleted());
           return;
         }
-
-        const txData = await verifyValidTransaction(web3Service);
-        if (!txData) return;
 
         const txValue = txData.value;
         const txOwner = txData.from;
@@ -236,8 +236,13 @@ export default function useTxDebugger(txHash) {
         txDispatch(setTxError('tradeFunction', ''));
         return tradeData;
       } catch(e) {
-        console.log(e);
-        return setStateOnError('tradeFunction');
+        let errorMessage = false;
+
+        if (e.message === 'overflow (operation="setValue", fault="overflow", details="Number can only safely store up to 53 bits")') {
+          errorMessage = "The Transaction might be failed because of a very long value passed to a parameter with type of Bytes like Hint.";
+        }
+
+        return setStateOnError('tradeFunction', errorMessage);
       }
     }
 
@@ -271,8 +276,9 @@ export default function useTxDebugger(txHash) {
       return true;
     }
 
-    function setStateOnError(key) {
-      txDispatch(setTxError(key, 'Unknown Error: The Transaction can not be debugged since something unexpected, even to us, happens.'));
+    function setStateOnError(key, error = false) {
+      error = error ? error : 'Unknown Error: The Transaction can not be debugged since something unexpected, even to us, happens.';
+      txDispatch(setTxError(key, error));
       txDispatch(setTxDebuggingCompleted());
       return false;
     }

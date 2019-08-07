@@ -1,6 +1,7 @@
 .common {
-  &__typing-text {
-    opacity: 1;
-    //animation: typing 1s forwards;
+  &__fade-in {
+    opacity: 0;
+    transform: translateY(10px);
+    animation: fade-in 0.3s forwards;
   }
 }
