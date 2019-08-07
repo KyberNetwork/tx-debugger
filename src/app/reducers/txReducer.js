@@ -16,71 +16,77 @@ export const initialTxState = {
       error: '',
       step: 2
     },
+    contract: {
+      name: 'Contract Address',
+      isChecked: false,
+      error: '',
+      step: 4
+    },
     tradeFunction: {
       name: 'Trade Function',
       isChecked: false,
       error: '',
-      step: 3
+      step: 5
     },
     sourceAmount: {
       name: 'Source Amount',
       isChecked: false,
       error: '',
-      step: 4
+      step: 6
     },
     gasUsed: {
       name: 'Gas Used',
       isChecked: false,
       error: '',
-      step: 5
+      step: 7
     },
     gasPrice: {
       name: 'Gas Price',
       isChecked: false,
       error: '',
-      step: 6
+      step: 8
     },
     etherValue: {
       name: 'ETH Value',
       isChecked: false,
       error: '',
-      step: 7
+      step: 9
     },
     allowance: {
       name: 'Allowance',
       isChecked: false,
       error: '',
-      step: 8
+      step: 10
     },
     balance: {
       name: 'Balance',
       isChecked: false,
       error: '',
-      step: 9
+      step: 11
     },
     etherAmount: {
       name: 'ETH Amount',
       isChecked: false,
       error: '',
-      step: 10
+      step: 12
     },
     userCap: {
       name: 'User Cap',
       isChecked: false,
       error: '',
-      step: 11
+      step: 13
     },
     rate: {
       name: 'Rate',
       isChecked: false,
       error: '',
-      step: 12
+      step: 14
     },
     minRate: {
       name: 'Min Conversion Rate',
       isChecked: false,
       error: '',
-      step: 13
+      step: 15
     }
   },
 };

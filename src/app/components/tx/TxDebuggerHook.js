@@ -2,6 +2,7 @@ import { useEffect, useContext } from 'react';
 import Web3Service from "../../../services/Web3Service";
 import * as calculators from "../../../utils/calculators";
 import { ETHER_ADDRESS } from "../../../config/app";
+import { NETWORK_ADDRESS } from "../../../config/env";
 import { validateTxHash } from "../../../utils/validators";
 import { AppContext } from "../../reducers";
 import { setTxStep, setTxError, setTxDebuggingCompleted } from "../../actions/txAction";
@@ -25,10 +26,12 @@ export default function useTxDebugger(txHash) {
         const txBlockNumber = txData.blockNumber;
         const txInput = txData.input;
 
+        const receipt = await web3Service.txMined(txHash);
+
+        if (!verifyContractAddress(receipt.to)) return;
+
         const tradeData = await verifyTradeFunction(web3Service, txInput);
         if (!tradeData) return;
-
-        const receipt = await web3Service.txMined(txHash);
 
         if (receipt && receipt.status) {
           txDispatch(setTxDebuggingCompleted());
@@ -71,9 +74,24 @@ export default function useTxDebugger(txHash) {
       txDispatch(setTxDebuggingCompleted());
     }
 
+    function verifyContractAddress(contractAddress) {
+      txDispatch(setTxStep(tx.errors.contract.step));
+
+      if (contractAddress !== NETWORK_ADDRESS) {
+        txDispatch(setTxError('contract', `Contract Address of the Transaction should be ${NETWORK_ADDRESS}`));
+        txDispatch(setTxDebuggingCompleted());
+        return false;
+      }
+
+      txDispatch(setTxError('contract', ''));
+
+      return true;
+    }
+
     async function verifyValidTransaction(web3Service) {
       try {
         txDispatch(setTxStep(tx.errors.txNotFound.step));
+
         const txData = await web3Service.getTx(txHash);
 
         if (!txData) {
@@ -92,6 +110,7 @@ export default function useTxDebugger(txHash) {
 
     function verifyTxHash() {
       txDispatch(setTxStep(tx.errors.tx.step));
+
       if (!validateTxHash(txHash)) {
         txDispatch(setTxError('tx', 'Your transaction hash is invalid.'));
         txDispatch(setTxDebuggingCompleted());
@@ -99,6 +118,7 @@ export default function useTxDebugger(txHash) {
       }
 
       txDispatch(setTxError('tx', ''));
+
       return true;
     }
 
