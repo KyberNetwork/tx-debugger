@@ -41,6 +41,7 @@ export default function TxDebugger(props) {
         {tx.isDebuggingCompleted && (
           <div className={"tx-debugger__text tx-debugger__text--white"}>
             <TypingEffect text="Done Debugging."/>
+            <span className={"common__blink"}>|</span>
           </div>
         )}
       </div>
