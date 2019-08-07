@@ -1,6 +1,7 @@
 .tx-debugger {
   display: flex;
   justify-content: space-between;
+  padding-bottom: 50px;
 
   &__box {
     border-radius: 6px;
@@ -110,6 +111,19 @@
         right: 0;
         margin: 0 auto;
       }
+    }
+  }
+
+  @media (max-width: $breakpoint-medium) {
+    display: block;
+
+    &__debug,
+    &__summary {
+      width: 100%;
+    }
+
+    &__debug {
+      margin-bottom: 30px;
     }
   }
 }

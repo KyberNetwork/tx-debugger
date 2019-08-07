@@ -35,6 +35,15 @@
 
     &-tx {
       color: $green;
+      margin-right: 10px;
+      word-break: break-word;
+    }
+
+    &-link {
+      display: inline-block;
+      margin-right: 7px;
+      position: relative;
+      top: 1px;
     }
   }
 }
