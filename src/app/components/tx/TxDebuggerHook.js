@@ -19,13 +19,6 @@ export default function useTxDebugger(txHash) {
         const txData = await verifyValidTransaction(web3Service);
         if (!txData) return;
 
-        const receipt = await web3Service.txMined(txHash);
-
-        if (receipt && receipt.status) {
-          txDispatch(setTxDebuggingCompleted());
-          return;
-        }
-
         const txValue = txData.value;
         const txOwner = txData.from;
         const txGasPrice = txData.gasPrice;
@@ -34,6 +27,13 @@ export default function useTxDebugger(txHash) {
 
         const tradeData = await verifyTradeFunction(web3Service, txInput);
         if (!tradeData) return;
+
+        const receipt = await web3Service.txMined(txHash);
+
+        if (receipt && receipt.status) {
+          txDispatch(setTxDebuggingCompleted());
+          return;
+        }
 
         const source = tradeData[0].value;
         const srcAmount = tradeData[1].value;
