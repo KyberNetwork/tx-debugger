@@ -47,4 +47,13 @@
       top: 1px;
     }
   }
+
+  @media (max-width: $breakpoint-medium) {
+    &__content {
+      &-tx {
+        display: block;
+        margin-bottom: 5px;
+      }
+    }
+  }
 }
