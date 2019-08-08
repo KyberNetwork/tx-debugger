@@ -18,7 +18,24 @@
   }
 
   &__content {
-    padding: 20px 25px;
+    padding: 0 25px;
+    height: 485px;
+    overflow: auto;
+    margin: 20px 20px 20px 0;
+
+    &::-webkit-scrollbar-track {
+      border-radius: 8px;
+      background-color: rgba(163, 165, 175, .2);
+    }
+
+    &::-webkit-scrollbar {
+      width: 4px;
+    }
+
+    &::-webkit-scrollbar-thumb {
+      border-radius: 8px;
+      background-color: #9da1b2;
+    }
   }
 
   &__item {
@@ -97,7 +114,7 @@
   &__summary {
     width: 45%;
 
-    .tx-debugger__content {
+    .tx-debugger__header {
       position: relative;
 
       &::after {
@@ -106,7 +123,7 @@
         height: 1px;
         background-color: $grey-lighter;
         position: absolute;
-        top: 0;
+        bottom: 0;
         left: 0;
         right: 0;
         margin: 0 auto;
@@ -124,6 +141,17 @@
 
     &__debug {
       margin-bottom: 30px;
+      padding-bottom: 1px;
+
+      .tx-debugger__content {
+        height: 290px;
+      }
+    }
+
+    &__summary {
+      .tx-debugger__content {
+        height: auto;
+      }
     }
   }
 }

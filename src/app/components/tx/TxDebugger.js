@@ -1,13 +1,18 @@
-import React, { useContext } from 'react';
+import React, { useContext, useEffect, useRef } from 'react';
 import useTxDebugger from "./TxDebuggerHook";
 import { AppContext } from "../../reducers";
 import TypingEffect from "../commons/TypingEffect";
 
 export default function TxDebugger(props) {
-  useTxDebugger(props.txHash);
-
   let bugCount = 0;
   const { tx } = useContext(AppContext);
+
+  useTxDebugger(props.txHash);
+  const contentRef = useRef(null);
+
+  useEffect(() => {
+    contentRef.current.scrollTo({top: contentRef.current.scrollHeight, behavior: 'smooth'});
+  }, [tx.currentStep, tx.isDebuggingCompleted]);
 
   function renderDebugTerminal() {
     return (
@@ -52,7 +57,7 @@ export default function TxDebugger(props) {
     <div className={"tx-debugger"}>
       <div className={"tx-debugger__box tx-debugger__debug"}>
         <div className={"tx-debugger__header"}>Debug</div>
-        <div className={"tx-debugger__content"}>
+        <div className={"tx-debugger__content"} ref={contentRef}>
           {renderDebugTerminal()}
         </div>
       </div>
