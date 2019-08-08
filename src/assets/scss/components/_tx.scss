@@ -129,6 +129,10 @@
         margin: 0 auto;
       }
     }
+
+    .tx-debugger__content {
+      padding-top: 1px;
+    }
   }
 
   @media (max-width: $breakpoint-medium) {
