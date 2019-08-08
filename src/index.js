@@ -11,7 +11,7 @@ const routing = (
     <Router>
       <div>
         <Switch>
-          <Route exact path="/tx/:txHash" component={App} />
+          <Route exact path="/:txHash" component={App} />
           <Route exact path="/error" component={Error} />
           <Redirect to={`/error`}/>
         </Switch>
