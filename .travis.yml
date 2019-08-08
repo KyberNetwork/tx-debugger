@@ -47,7 +47,7 @@ deploy:
       branch: develop
 
   - provider: script
-    script: npm run build-production
+    script: npm run build-semi-production
     on:
       branch: develop
     skip_cleanup: true
