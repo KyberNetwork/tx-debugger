@@ -7,7 +7,7 @@ import { AppProvider } from "./app/reducers";
 
 const routing = (
   <AppProvider>
-    <Router>
+    <Router basename="/tx-diagnose">
       <div>
         <Switch>
           <Route exact path={`${process.env.PUBLIC_URL}/:txHash`} component={App} />
