@@ -78,7 +78,7 @@ export default function useTxDebugger(txHash) {
       txDispatch(setTxStep(tx.errors.contract.step));
 
       if (contractAddress !== NETWORK_ADDRESS) {
-        txDispatch(setTxError('contract', `Contract Address of the Transaction should be ${NETWORK_ADDRESS}`));
+        txDispatch(setTxError('contract', `Contract Address of the Transaction should be Kyber Network Proxy Contract (${NETWORK_ADDRESS}).`));
         txDispatch(setTxDebuggingCompleted());
         return false;
       }
