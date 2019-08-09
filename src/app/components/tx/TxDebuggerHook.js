@@ -45,6 +45,7 @@ export default function useTxDebugger(txHash) {
         const minConversionRate = tradeData[5].value;
 
         verifySourceAmount(srcAmount);
+        verifyMaxDestAmount(maxDestAmount);
         verifyGasUsed(web3Service, receipt, txData.gas);
         await verifyGasPrice(web3Service, txBlockNumber, txGasPrice);
 
@@ -306,6 +307,18 @@ export default function useTxDebugger(txHash) {
       }
 
       txDispatch(setTxError('sourceAmount', ''));
+      return true;
+    }
+
+    function verifyMaxDestAmount(maxDestAmount) {
+      txDispatch(setTxStep(tx.errors.maxDestAmount.step));
+
+      if (calculators.compareTwoNumber(maxDestAmount, 0) !== 1) {
+        txDispatch(setTxError('maxDestAmount', 'Max Dest Amount cannot be zero.'));
+        return false;
+      }
+
+      txDispatch(setTxError('maxDestAmount', ''));
       return true;
     }
 

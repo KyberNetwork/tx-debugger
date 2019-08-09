@@ -34,59 +34,65 @@ export const initialTxState = {
       error: '',
       step: 6
     },
+    maxDestAmount: {
+      name: 'Max Dest Amount',
+      isChecked: false,
+      error: '',
+      step: 7
+    },
     gasUsed: {
       name: 'Gas Used',
       isChecked: false,
       error: '',
-      step: 7
+      step: 8
     },
     gasPrice: {
       name: 'Gas Price',
       isChecked: false,
       error: '',
-      step: 8
+      step: 9
     },
     etherValue: {
       name: 'ETH Value',
       isChecked: false,
       error: '',
-      step: 9
+      step: 10
     },
     allowance: {
       name: 'Allowance',
       isChecked: false,
       error: '',
-      step: 10
+      step: 11
     },
     balance: {
       name: 'Balance',
       isChecked: false,
       error: '',
-      step: 11
+      step: 12
     },
     etherAmount: {
       name: 'ETH Amount',
       isChecked: false,
       error: '',
-      step: 12
+      step: 13
     },
     userCap: {
       name: 'User Cap',
       isChecked: false,
       error: '',
-      step: 13
+      step: 14
     },
     rate: {
       name: 'Rate',
       isChecked: false,
       error: '',
-      step: 14
+      step: 15
     },
     minRate: {
       name: 'Min Conversion Rate',
       isChecked: false,
       error: '',
-      step: 15
+      step: 16
     }
   },
 };
