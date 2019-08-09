@@ -1,7 +1,9 @@
-import React  from 'react';
-import { ETHERSCAN_URL, ENJINX_URL } from "../../../config/env";
+import React from 'react';
+import env from "../../../config/env";
 
 export default function Header(props) {
+  const envConfig = env[props.network];
+
   return (
     <div className={"header"}>
       <div className={"container"}>
@@ -12,12 +14,12 @@ export default function Header(props) {
             <div>
               <span className={"header__content-tx"}>{props.txHash}</span>
 
-              <a href={`${ETHERSCAN_URL}/tx/${props.txHash}`} className={"header__content-link"} title="View on Etherscan" target="_blank" rel="noreferrer noopener">
+              <a href={`${envConfig.ETHERSCAN_URL}/tx/${props.txHash}`} className={"header__content-link"} title="View on Etherscan" target="_blank" rel="noreferrer noopener">
                 <img src={require('../../../assets/images/icons/etherscan_explorer.svg')} alt="View on Etherscan"/>
               </a>
 
-              {ENJINX_URL && (
-                <a href={`${ENJINX_URL}/eth/transaction/${props.txHash}`} className={"header__content-link"} title="View on Kyber.Enjinx" target="_blank" rel="noreferrer noopener">
+              {envConfig.ENJINX_URL && (
+                <a href={`${envConfig.ENJINX_URL}/eth/transaction/${props.txHash}`} className={"header__content-link"} title="View on Kyber.Enjinx" target="_blank" rel="noreferrer noopener">
                   <img src={require('../../../assets/images/icons/kyber_explorer.svg')} alt="View on Kyber.Enjinx"/>
                 </a>
               )}

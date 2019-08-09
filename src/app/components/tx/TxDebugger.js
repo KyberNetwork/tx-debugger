@@ -7,7 +7,7 @@ export default function TxDebugger(props) {
   let bugCount = 0;
   const { tx } = useContext(AppContext);
 
-  useTxDebugger(props.txHash);
+  useTxDebugger(props.txHash, props.network);
   const contentRef = useRef(null);
 
   useEffect(() => {

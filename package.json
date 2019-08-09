@@ -14,11 +14,7 @@
   "scripts": {
     "start": "react-scripts start",
     "build": "react-scripts build",
-    "development": "REACT_APP_ENV=development react-scripts start",
-    "production": "REACT_APP_ENV=production react-scripts start",
-    "build-development": "REACT_APP_ENV=development react-scripts build",
-    "build-semi-production": "REACT_APP_ENV=production react-scripts build",
-    "build-production": "REACT_APP_ENV=production PUBLIC_URL=/tx-diagnose react-scripts build",
+    "build-production": "PUBLIC_URL=/tx-diagnose react-scripts build",
     "test": "react-scripts test",
     "eject": "react-scripts eject"
   },

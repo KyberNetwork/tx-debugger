@@ -2,20 +2,24 @@ import { useEffect, useContext } from 'react';
 import Web3Service from "../../../services/Web3Service";
 import * as calculators from "../../../utils/calculators";
 import { ETHER_ADDRESS } from "../../../config/app";
-import { NETWORK_ADDRESS } from "../../../config/env";
+import env from "../../../config/env";
 import { validateTxHash } from "../../../utils/validators";
 import { AppContext } from "../../reducers";
 import { setTxStep, setTxError, setTxDebuggingCompleted } from "../../actions/txAction";
 
-export default function useTxDebugger(txHash) {
+export default function useTxDebugger(txHash, network) {
   const { tx, txDispatch } = useContext(AppContext);
+  const envConfig = env[network];
 
   useEffect(() => {
     async function debugTxHash() {
       try {
         if (!verifyTxHash()) return;
 
-        const web3Service = new Web3Service();
+        const web3Service = new Web3Service({
+          networkAddress: envConfig.NETWORK_ADDRESS,
+          nodeUrl: envConfig.NODE_URL,
+        });
 
         const txData = await verifyValidTransaction(web3Service);
         if (!txData) return;
@@ -78,8 +82,8 @@ export default function useTxDebugger(txHash) {
     function verifyContractAddress(contractAddress) {
       txDispatch(setTxStep(tx.errors.contract.step));
 
-      if (contractAddress !== NETWORK_ADDRESS) {
-        txDispatch(setTxError('contract', `Contract Address of the Transaction should be Kyber Network Proxy Contract (${NETWORK_ADDRESS}).`));
+      if (contractAddress !== envConfig.NETWORK_ADDRESS) {
+        txDispatch(setTxError('contract', `Contract Address of the Transaction should be Kyber Network Proxy Contract (${envConfig.NETWORK_ADDRESS}).`));
         txDispatch(setTxDebuggingCompleted());
         return false;
       }
