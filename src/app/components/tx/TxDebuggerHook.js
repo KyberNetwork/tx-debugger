@@ -5,7 +5,7 @@ import { ETHER_ADDRESS } from "../../../config/app";
 import env from "../../../config/env";
 import { validateTxHash } from "../../../utils/validators";
 import { AppContext } from "../../reducers";
-import { setTxStep, setTxError, setTxDebuggingCompleted } from "../../actions/txAction";
+import { setTxStep, setTxError, setTxDebuggingCompleted, resetTxStatus } from "../../actions/txAction";
 
 export default function useTxDebugger(txHash, network) {
   const { tx, txDispatch } = useContext(AppContext);
@@ -333,6 +333,7 @@ export default function useTxDebugger(txHash, network) {
       return false;
     }
 
+    txDispatch(resetTxStatus());
     debugTxHash();
 
     // eslint-disable-next-line

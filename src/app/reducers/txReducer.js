@@ -109,12 +109,6 @@ export function txReducer(state, action) {
         }
       }
     }
-    case txActionTypes.SET_TX_UNKNOWN_ERROR: {
-      return {
-        ...state,
-        unknownError: action.payload
-      }
-    }
     case txActionTypes.SET_TX_STEP: {
       return {
         ...state,
@@ -126,6 +120,9 @@ export function txReducer(state, action) {
         ...state,
         isDebuggingCompleted: action.payload
       }
+    }
+    case txActionTypes.RESET_TX_STATUS: {
+      return initialTxState
     }
     default:
       return state;
