@@ -29,33 +29,10 @@ deploy:
       branch: develop
     skip_cleanup: true
 
-  - provider: script
-    script: npm run build-development
-    on:
-      branch: develop
-    skip_cleanup: true
-
   - provider: s3
     access_key_id: $AWS_ACCESS_KEY_ID
     secret_access_key: $AWS_SECRET_ACCESS_KEY
-    bucket: ropsten-tx-debugger.knstats.com
-    region: ap-southeast-1
-    acl: public_read
-    local_dir: build
-    skip_cleanup: true
-    on:
-      branch: develop
-
-  - provider: script
-    script: npm run build-semi-production
-    on:
-      branch: develop
-    skip_cleanup: true
-
-  - provider: s3
-    access_key_id: $AWS_ACCESS_KEY_ID
-    secret_access_key: $AWS_SECRET_ACCESS_KEY
-    bucket: mainnet-tx-debugger.knstats.com
+    bucket: tx-debugger.knstats.com
     region: ap-southeast-1
     acl: public_read
     local_dir: build
