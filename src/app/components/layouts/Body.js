@@ -5,7 +5,10 @@ export default function Body(props) {
   return (
     <div className={"body"}>
       <div className={"container"}>
-        <TxDebugger txHash={props.txHash}/>
+        <TxDebugger
+          txHash={props.txHash}
+          network={props.network}
+        />
       </div>
     </div>
   )

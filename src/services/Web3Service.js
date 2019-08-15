@@ -1,24 +1,28 @@
 import Web3 from "web3";
 import { KYBER_NETWORK_ABI, ERC20_ABI} from "../config/app";
-import { RESERVE_ADDRESS, NETWORK_ADDRESS, NODE_URL } from "../config/env";
 import * as calculators from "../utils/calculators";
 
 export default class Web3Service {
-  constructor() {
-    this.web3 = new Web3(new Web3.providers.HttpProvider(NODE_URL));
+  constructor(props) {
+    this.networkAddress = props.networkAddress;
+    this.web3 = new Web3(new Web3.providers.HttpProvider(props.nodeUrl));
     this.erc20Contract = new this.web3.eth.Contract(ERC20_ABI);
-    this.networkContract = new this.web3.eth.Contract(KYBER_NETWORK_ABI, NETWORK_ADDRESS);
+    this.networkContract = new this.web3.eth.Contract(KYBER_NETWORK_ABI, this.networkAddress);
   }
 
   getTx(txHash) {
-    return new Promise((resolve, rejected) => {
-      this.web3.eth.getTransaction(txHash).then((result) => {
-        if (result != null) {
-          resolve(result);
-        } else {
-          resolve(false);
-        }
-      })
+    return new Promise((resolve, reject) => {
+      try {
+        this.web3.eth.getTransaction(txHash).then((result) => {
+          if (result != null) {
+            resolve(result);
+          } else {
+            resolve(false);
+          }
+        })
+      } catch (e) {
+        reject(e);
+      }
     })
   }
 
@@ -44,10 +48,6 @@ export default class Web3Service {
     });
   }
 
-  getListReserve() {
-    return Promise.resolve([RESERVE_ADDRESS])
-  }
-
   txMined(hash) {
     return new Promise((resolve, reject) => {
       this.web3.eth.getTransactionReceipt(hash).then((result) => {
@@ -62,7 +62,7 @@ export default class Web3Service {
     return new Promise((resolve, reject) => {
       const data = this.networkContract.methods.maxGasPrice().encodeABI();
       this.web3.eth.call({
-        to: NETWORK_ADDRESS,
+        to: this.networkAddress,
         data: data
       }, blockNumber)
         .then(result => {
@@ -77,7 +77,7 @@ export default class Web3Service {
   getAllowanceAtSpecificBlock(sourceToken, owner, blockNumber) {
     let tokenContract = this.erc20Contract;
     tokenContract.options.address = sourceToken;
-    const data = tokenContract.methods.allowance(owner, NETWORK_ADDRESS).encodeABI();
+    const data = tokenContract.methods.allowance(owner, this.networkAddress).encodeABI();
 
     return new Promise((resolve, reject) => {
       this.web3.eth.call({
@@ -117,7 +117,7 @@ export default class Web3Service {
 
     return new Promise((resolve, reject) => {
       this.web3.eth.call({
-        to: NETWORK_ADDRESS,
+        to: this.networkAddress,
         data: data
       }, blockNumber)
         .then(result => {
@@ -137,7 +137,7 @@ export default class Web3Service {
 
     return new Promise((resolve, reject) => {
       this.web3.eth.call({
-        to: NETWORK_ADDRESS,
+        to: this.networkAddress,
         data: data
       }, blockNumber)
         .then(result => {

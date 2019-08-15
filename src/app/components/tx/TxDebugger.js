@@ -6,9 +6,9 @@ import TypingEffect from "../commons/TypingEffect";
 export default function TxDebugger(props) {
   let bugCount = 0;
   const { tx } = useContext(AppContext);
-
-  useTxDebugger(props.txHash);
   const contentRef = useRef(null);
+
+  useTxDebugger(props.txHash, props.network);
 
   useEffect(() => {
     contentRef.current.scrollTo({top: contentRef.current.scrollHeight, behavior: 'smooth'});

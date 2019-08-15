@@ -1,3 +1,11 @@
-const env = process.env.REACT_APP_ENV ? process.env.REACT_APP_ENV : 'development';
-const envConfig = require(`./envs/${env}`);
-module.exports = envConfig;
+import ropstenConfig from './envs/ropsten';
+import stagingConfig from './envs/staging';
+import mainnetConfig from './envs/mainnet';
+
+const env = {
+  ropsten: ropstenConfig,
+  staging: stagingConfig,
+  mainnet: mainnetConfig
+};
+
+export default env;
