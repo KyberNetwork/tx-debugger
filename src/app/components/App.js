@@ -10,7 +10,7 @@ export default function App(props) {
   const [txHash, setTxHash] = useState(urlParams.txHash);
 
   function changeRoute(route) {
-    props.history.push(route);
+    props.history.push(process.env.PUBLIC_URL + route);
   }
 
   return (
