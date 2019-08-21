@@ -53,7 +53,9 @@ export default function Header(props) {
                   <input className={`header__input`} type="text" defaultValue={props.txHash} ref={props.txInputRef}/>
                   <div className={"header__button common__button"} onClick={handleEditingTx}>Debug</div>
                 </div>
-                <div className={"header__error common__error"}>{props.txError}</div>
+                {props.txError &&
+                  <div className={"header__error common__error common__fade-in"}>{props.txError}</div>
+                }
               </div>
             }
           </div>

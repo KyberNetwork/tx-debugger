@@ -9,7 +9,9 @@ export default function Home(props) {
           <input className={"home__input"} placeholder={"Paste your transaction hash here"} ref={props.txInputRef}/>
           <div className={"home__button common__button"} onClick={props.updateTxHash}>Debug</div>
         </div>
-        <div className={"common__error"}>{props.txError}</div>
+        {props.txError &&
+          <div className={"common__error common__fade-in"}>{props.txError}</div>
+        }
       </div>
     </div>
   )
