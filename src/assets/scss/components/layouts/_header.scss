@@ -46,22 +46,6 @@
     font-size: 14px;
   }
 
-  &__button {
-    display: inline-block;
-    font-size: 14px;
-    font-weight: normal;
-    padding: 10px 18px;
-    color: white;
-    border-radius: 3px;
-    background-image: linear-gradient(to top, #1fb990, #31cb9e);
-    cursor: pointer;
-  }
-
-  &__error {
-    color: $red;
-    font-size: 12px;
-  }
-
   &__tx {
     color: $green;
     margin-right: 10px;

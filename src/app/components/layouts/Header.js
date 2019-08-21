@@ -1,31 +1,21 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import env from "../../../config/env";
-import { validateTxHash } from "../../../utils/validators";
 
 export default function Header(props) {
   const envConfig = env[props.network];
-  const txHashInputRef = useRef(props.txHash);
   const [isEditing, setIsEditing] = useState(false);
-  const [error, setError] = useState(null);
 
   useEffect(() => {
     if (isEditing) {
-      txHashInputRef.current.focus();
+      props.txInputRef.current.focus();
     }
+    // eslint-disable-next-line
   }, [isEditing]);
 
   function handleEditingTx() {
-    const hash = txHashInputRef.current.value;
-
-    if (!validateTxHash(hash)) {
-      setError('Your TX Hash is invalid.');
-      return;
+    if (props.updateTxHash()) {
+      setIsEditing(false);
     }
-
-    props.changeRoute(`/${hash}`);
-    props.setTxHash(hash);
-    setIsEditing(false);
-    setError(null);
   }
 
   return (
@@ -60,10 +50,10 @@ export default function Header(props) {
             {isEditing &&
               <div className={"header__tx-container common__fade-in"}>
                 <div>
-                  <input className={`header__input`} type="text" defaultValue={props.txHash} ref={txHashInputRef}/>
-                  <div className={"header__button"} onClick={handleEditingTx}>Done</div>
+                  <input className={`header__input`} type="text" defaultValue={props.txHash} ref={props.txInputRef}/>
+                  <div className={"header__button common__button"} onClick={handleEditingTx}>Debug</div>
                 </div>
-                <div className={"header__error"}>{error}</div>
+                <div className={"header__error common__error"}>{props.txError}</div>
               </div>
             }
           </div>

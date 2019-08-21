@@ -10,8 +10,8 @@ const routing = (
     <Router>
       <div>
         <Switch>
-          <Route path={`${process.env.PUBLIC_URL}/:txHash/:network?`} component={App} />
-          <Redirect to={`${process.env.PUBLIC_URL}/invalid-tx-hash`}/>
+          <Route path={`${process.env.PUBLIC_URL}/:txHash?/:network?`} component={App}/>
+          <Redirect to={`${process.env.PUBLIC_URL}/`}/>
         </Switch>
       </div>
     </Router>
