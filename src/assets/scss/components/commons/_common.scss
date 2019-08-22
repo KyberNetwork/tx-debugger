@@ -12,4 +12,30 @@
     margin-left: 3px;
     animation: blink 0.5s infinite;
   }
+
+  &__button {
+    display: inline-block;
+    font-size: 14px;
+    font-weight: normal;
+    padding: 10px 18px;
+    color: white;
+    border-radius: 3px;
+    background: linear-gradient(to top, #1fb990, #31cb9e) 0 0;
+    background-size: auto 150%;
+    cursor: pointer;
+    transition: all .3s;
+
+    &:hover {
+      background-position: 0 100%;
+    }
+
+    &:active {
+      transform: translateY(2px);
+    }
+  }
+
+  &__error {
+    color: $red;
+    font-size: 12px;
+  }
 }
