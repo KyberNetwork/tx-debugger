@@ -32,6 +32,12 @@ export default function App(props) {
     return true;
   }
 
+  function handleKeyUpOnTxInput(e) {
+    if (e.key === 'Enter') {
+      updateTxHash();
+    }
+  }
+
   return (
     <div className={'app'}>
       {txHash && (
@@ -41,6 +47,7 @@ export default function App(props) {
             txError={txError}
             txInputRef={txInputRef}
             updateTxHash={updateTxHash}
+            handleKeyUpOnTxInput={handleKeyUpOnTxInput}
             network={network}
           />
 
@@ -58,6 +65,7 @@ export default function App(props) {
           txError={txError}
           txInputRef={txInputRef}
           updateTxHash={updateTxHash}
+          handleKeyUpOnTxInput={handleKeyUpOnTxInput}
         />
       )}
     </div>

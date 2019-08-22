@@ -14,7 +14,7 @@ export default function Header(props) {
 
             <div className={"header__tx-container common__fade-in"}>
               <div>
-                <input className={`header__input`} type="text" defaultValue={props.txHash} ref={props.txInputRef}/>
+                <input className={`header__input`} type="text" defaultValue={props.txHash} ref={props.txInputRef}  onKeyUp={props.handleKeyUpOnTxInput}/>
                 <div className={"header__button common__button"} onClick={props.updateTxHash}>Debug</div>
 
                 <div className={"header__link-container"}>
