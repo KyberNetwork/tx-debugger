@@ -18,7 +18,7 @@ export default function App(props) {
   }
 
   function updateTxHash() {
-    const hash = txInputRef.current.value;
+    const hash = (txInputRef.current.value).trim();
 
     if (!validateTxHash(hash)) {
       setTxError('Your TX Hash is invalid.');
