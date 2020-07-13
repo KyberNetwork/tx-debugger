@@ -1,5 +1,5 @@
 import Web3 from "web3";
-import { KYBER_NETWORK_ABI, ERC20_ABI} from "../config/app";
+import { KYBER_NETWORK_ABI, ERC20_ABI, NEW_PROXY_ABI } from "../config/app";
 import * as calculators from "../utils/calculators";
 
 export default class Web3Service {
@@ -29,11 +29,17 @@ export default class Web3Service {
   exactTradeData(data) {
     return new Promise((resolve, reject) => {
       try {
+
         const tradeAbi = this.getAbiByName("tradeWithHint", KYBER_NETWORK_ABI);
         let decoded = this.decodeMethod(tradeAbi, data);
 
         if (!decoded) {
           const tradeAbi = this.getAbiByName("trade", KYBER_NETWORK_ABI);
+          decoded = this.decodeMethod(tradeAbi, data);
+        }
+
+        if (!decoded) {
+          const tradeAbi = this.getAbiByName("tradeWithHintAndFee", NEW_PROXY_ABI);
           decoded = this.decodeMethod(tradeAbi, data);
         }
 

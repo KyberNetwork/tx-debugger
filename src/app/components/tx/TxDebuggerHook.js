@@ -82,15 +82,18 @@ export default function useTxDebugger(txHash, network) {
     function verifyContractAddress(contractAddress) {
       txDispatch(setTxStep(tx.errors.contract.step));
 
-      if (contractAddress !== envConfig.NETWORK_ADDRESS) {
-        txDispatch(setTxError('contract', `Contract Address of the Transaction should be Kyber Network Proxy Contract (${envConfig.NETWORK_ADDRESS}).`));
-        txDispatch(setTxDebuggingCompleted());
-        return false;
+      if (contractAddress === envConfig.NETWORK_ADDRESS || contractAddress === envConfig.NEW_NETWORK_ADDRESS) {
+        txDispatch(setTxError('contract', ''));
+
+        return true;
       }
 
-      txDispatch(setTxError('contract', ''));
+      txDispatch(setTxError('contract',
+        `Contract Address of the Transaction should be either old Kyber Network Proxy Contract (${envConfig.NETWORK_ADDRESS}) or Katalyst Kyber Network Proxy Contract (${envConfig.NEW_NETWORK_ADDRESS}).`)
+      );
+      txDispatch(setTxDebuggingCompleted());
 
-      return true;
+      return false;
     }
 
     async function verifyValidTransaction(web3Service) {
