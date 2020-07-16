@@ -76,23 +76,17 @@ export const initialTxState = {
       error: '',
       step: 13
     },
-    userCap: {
-      name: 'User Cap',
-      isChecked: false,
-      error: '',
-      step: 14
-    },
     rate: {
       name: 'Rate',
       isChecked: false,
       error: '',
-      step: 15
+      step: 14
     },
     minRate: {
       name: 'Min Conversion Rate',
       isChecked: false,
       error: '',
-      step: 16
+      step: 15
     }
   },
 };

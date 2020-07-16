@@ -67,8 +67,6 @@ export default function useTxDebugger(txHash, network) {
           verifyEtherAmount(txValue, srcAmount);
         }
 
-        await verifyUserCap(web3Service, source, srcAmount, dest, maxDestAmount, txOwner, txBlockNumber);
-
         const rates = await verifyRate(web3Service, source, dest, srcAmount, txBlockNumber);
 
         if (!rates) return;
@@ -211,28 +209,6 @@ export default function useTxDebugger(txHash, network) {
       return true;
     }
 
-    async function verifyUserCap(web3Service, source, srcAmount, dest, maxDestAmount, txOwner, txBlockNumber) {
-      try {
-        txDispatch(setTxStep(tx.errors.userCap.step));
-
-        const amountToCheckCap = source === ETHER_ADDRESS ? srcAmount : dest === ETHER_ADDRESS ? maxDestAmount : false;
-
-        if (amountToCheckCap) {
-          const userCap = await web3Service.getMaxCapAtSpecificBlock(txOwner, txBlockNumber);
-          if (calculators.compareTwoNumber(amountToCheckCap, userCap) === 1) {
-            txDispatch(setTxError('userCap', 'Source Amount exceeds User Cap.'));
-            return false;
-          }
-        }
-
-        txDispatch(setTxError('userCap', ''));
-        return true;
-      } catch (e) {
-        console.log(e);
-        return setStateOnError('userCap');
-      }
-    }
-
     async function verifyRate(web3Service,source, dest, srcAmount, txBlockNumber) {
       try {
         txDispatch(setTxStep(tx.errors.rate.step));
@@ -279,7 +255,7 @@ export default function useTxDebugger(txHash, network) {
         txDispatch(setTxError('tradeFunction', ''));
         return tradeData;
       } catch(e) {
-        let errorMessage = false;
+        let errorMessage = 'The Transaction is not calling Kyber Trading Function.';
 
         if (e.message === 'overflow (operation="setValue", fault="overflow", details="Number can only safely store up to 53 bits")') {
           errorMessage = "The Transaction might be failed because of a very long value passed to a parameter with type of Bytes like Hint.";
@@ -332,7 +308,7 @@ export default function useTxDebugger(txHash, network) {
     }
 
     function setStateOnError(key, error = false) {
-      error = error ? error : 'Unknown Error: The Transaction can not be debugged since something unexpected, even to us, happens.';
+      error = error ? error : 'Unknown Error: The error can not be debugged since something unexpected, even to us, happens.';
       txDispatch(setTxError(key, error));
       txDispatch(setTxDebuggingCompleted());
       return false;
