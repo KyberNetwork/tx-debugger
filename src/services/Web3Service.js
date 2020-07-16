@@ -1,13 +1,14 @@
 import Web3 from "web3";
-import { KYBER_NETWORK_ABI, ERC20_ABI} from "../config/app";
+import { ERC20_ABI } from "../config/app";
 import * as calculators from "../utils/calculators";
 
 export default class Web3Service {
   constructor(props) {
-    this.networkAddress = props.networkAddress;
+    this.proxyAddress = props.proxyAddress;
+    this.proxyABI = props.proxyABI;
     this.web3 = new Web3(new Web3.providers.HttpProvider(props.nodeUrl));
     this.erc20Contract = new this.web3.eth.Contract(ERC20_ABI);
-    this.networkContract = new this.web3.eth.Contract(KYBER_NETWORK_ABI, this.networkAddress);
+    this.proxyContract = new this.web3.eth.Contract(this.proxyABI, this.proxyAddress);
   }
 
   getTx(txHash) {
@@ -29,11 +30,16 @@ export default class Web3Service {
   exactTradeData(data) {
     return new Promise((resolve, reject) => {
       try {
-        const tradeAbi = this.getAbiByName("tradeWithHint", KYBER_NETWORK_ABI);
+        const tradeAbi = this.getAbiByName("tradeWithHint", this.proxyABI);
         let decoded = this.decodeMethod(tradeAbi, data);
 
         if (!decoded) {
-          const tradeAbi = this.getAbiByName("trade", KYBER_NETWORK_ABI);
+          const tradeAbi = this.getAbiByName("trade", this.proxyABI);
+          decoded = this.decodeMethod(tradeAbi, data);
+        }
+
+        if (!decoded) {
+          const tradeAbi = this.getAbiByName("tradeWithHintAndFee", this.proxyABI);
           decoded = this.decodeMethod(tradeAbi, data);
         }
 
@@ -60,9 +66,9 @@ export default class Web3Service {
 
   wrapperGetGasCap(blockNumber) {
     return new Promise((resolve, reject) => {
-      const data = this.networkContract.methods.maxGasPrice().encodeABI();
+      const data = this.proxyContract.methods.maxGasPrice().encodeABI();
       this.web3.eth.call({
-        to: this.networkAddress,
+        to: this.proxyAddress,
         data: data
       }, blockNumber)
         .then(result => {
@@ -77,7 +83,7 @@ export default class Web3Service {
   getAllowanceAtSpecificBlock(sourceToken, owner, blockNumber) {
     let tokenContract = this.erc20Contract;
     tokenContract.options.address = sourceToken;
-    const data = tokenContract.methods.allowance(owner, this.networkAddress).encodeABI();
+    const data = tokenContract.methods.allowance(owner, this.proxyAddress).encodeABI();
 
     return new Promise((resolve, reject) => {
       this.web3.eth.call({
@@ -112,32 +118,13 @@ export default class Web3Service {
     })
   }
 
-  getMaxCapAtSpecificBlock(address, blockNumber) {
-    const data = this.networkContract.methods.getUserCapInWei(address).encodeABI();
-
-    return new Promise((resolve, reject) => {
-      this.web3.eth.call({
-        to: this.networkAddress,
-        data: data
-      }, blockNumber)
-        .then(result => {
-          var cap = this.web3.eth.abi.decodeParameters(['uint256'], result);
-          resolve(cap[0])
-        }).catch((err) => {
-        reject(err)
-      })
-    })
-  }
-
   getRateAtSpecificBlock(source, dest, srcAmount, blockNumber) {
-    const mask = calculators.maskNumber();
-    let srcAmountEnableFistBit = calculators.sumOfTwoNumber(srcAmount,  mask);
-    srcAmountEnableFistBit = calculators.toHex(srcAmountEnableFistBit);
-    const data = this.networkContract.methods.getExpectedRate(source, dest, srcAmountEnableFistBit).encodeABI();
+    srcAmount = calculators.toHex(srcAmount);
+    const data = this.proxyContract.methods.getExpectedRate(source, dest, srcAmount).encodeABI();
 
     return new Promise((resolve, reject) => {
       this.web3.eth.call({
-        to: this.networkAddress,
+        to: this.proxyAddress,
         data: data
       }, blockNumber)
         .then(result => {

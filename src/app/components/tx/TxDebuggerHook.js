@@ -1,7 +1,7 @@
 import { useEffect, useContext } from 'react';
 import Web3Service from "../../../services/Web3Service";
 import * as calculators from "../../../utils/calculators";
-import { ETHER_ADDRESS } from "../../../config/app";
+import { ETHER_ADDRESS, NEW_PROXY_ABI, PROXY_ABI } from "../../../config/app";
 import env from "../../../config/env";
 import { validateTxHash } from "../../../utils/validators";
 import { AppContext } from "../../reducers";
@@ -16,10 +16,7 @@ export default function useTxDebugger(txHash, network) {
       try {
         if (!verifyTxHash()) return;
 
-        const web3Service = new Web3Service({
-          networkAddress: envConfig.NETWORK_ADDRESS,
-          nodeUrl: envConfig.NODE_URL,
-        });
+        let web3Service = initiateWeb3Service(envConfig.NETWORK_ADDRESS, PROXY_ABI);
 
         const txData = await verifyValidTransaction(web3Service);
         if (!txData) return;
@@ -31,8 +28,13 @@ export default function useTxDebugger(txHash, network) {
         const txInput = txData.input;
 
         const receipt = await web3Service.txMined(txHash);
+        const contractAddress = receipt.to;
 
-        if (!verifyContractAddress(receipt.to)) return;
+        if (!verifyContractAddress(contractAddress)) return;
+
+        if (contractAddress === envConfig.NEW_NETWORK_ADDRESS) {
+          web3Service = initiateWeb3Service(envConfig.NEW_NETWORK_ADDRESS, NEW_PROXY_ABI);
+        }
 
         const tradeData = await verifyTradeFunction(web3Service, txInput);
         if (!tradeData) return;
@@ -65,8 +67,6 @@ export default function useTxDebugger(txHash, network) {
           verifyEtherAmount(txValue, srcAmount);
         }
 
-        await verifyUserCap(web3Service, source, srcAmount, dest, maxDestAmount, txOwner, txBlockNumber);
-
         const rates = await verifyRate(web3Service, source, dest, srcAmount, txBlockNumber);
 
         if (!rates) return;
@@ -82,15 +82,18 @@ export default function useTxDebugger(txHash, network) {
     function verifyContractAddress(contractAddress) {
       txDispatch(setTxStep(tx.errors.contract.step));
 
-      if (contractAddress !== envConfig.NETWORK_ADDRESS) {
-        txDispatch(setTxError('contract', `Contract Address of the Transaction should be Kyber Network Proxy Contract (${envConfig.NETWORK_ADDRESS}).`));
-        txDispatch(setTxDebuggingCompleted());
-        return false;
+      if (contractAddress === envConfig.NETWORK_ADDRESS || contractAddress === envConfig.NEW_NETWORK_ADDRESS) {
+        txDispatch(setTxError('contract', ''));
+
+        return true;
       }
 
-      txDispatch(setTxError('contract', ''));
+      txDispatch(setTxError('contract',
+        `Contract Address of the Transaction should be either old Kyber Network Proxy Contract (${envConfig.NETWORK_ADDRESS}) or Katalyst Kyber Network Proxy Contract (${envConfig.NEW_NETWORK_ADDRESS}).`)
+      );
+      txDispatch(setTxDebuggingCompleted());
 
-      return true;
+      return false;
     }
 
     async function verifyValidTransaction(web3Service) {
@@ -206,28 +209,6 @@ export default function useTxDebugger(txHash, network) {
       return true;
     }
 
-    async function verifyUserCap(web3Service, source, srcAmount, dest, maxDestAmount, txOwner, txBlockNumber) {
-      try {
-        txDispatch(setTxStep(tx.errors.userCap.step));
-
-        const amountToCheckCap = source === ETHER_ADDRESS ? srcAmount : dest === ETHER_ADDRESS ? maxDestAmount : false;
-
-        if (amountToCheckCap) {
-          const userCap = await web3Service.getMaxCapAtSpecificBlock(txOwner, txBlockNumber);
-          if (calculators.compareTwoNumber(amountToCheckCap, userCap) === 1) {
-            txDispatch(setTxError('userCap', 'Source Amount exceeds User Cap.'));
-            return false;
-          }
-        }
-
-        txDispatch(setTxError('userCap', ''));
-        return true;
-      } catch (e) {
-        console.log(e);
-        return setStateOnError('userCap');
-      }
-    }
-
     async function verifyRate(web3Service,source, dest, srcAmount, txBlockNumber) {
       try {
         txDispatch(setTxStep(tx.errors.rate.step));
@@ -274,7 +255,7 @@ export default function useTxDebugger(txHash, network) {
         txDispatch(setTxError('tradeFunction', ''));
         return tradeData;
       } catch(e) {
-        let errorMessage = false;
+        let errorMessage = 'The Transaction is not calling Kyber Trading Function.';
 
         if (e.message === 'overflow (operation="setValue", fault="overflow", details="Number can only safely store up to 53 bits")') {
           errorMessage = "The Transaction might be failed because of a very long value passed to a parameter with type of Bytes like Hint.";
@@ -327,10 +308,18 @@ export default function useTxDebugger(txHash, network) {
     }
 
     function setStateOnError(key, error = false) {
-      error = error ? error : 'Unknown Error: The Transaction can not be debugged since something unexpected, even to us, happens.';
+      error = error ? error : 'Unknown Error: The error can not be debugged since something unexpected, even to us, happens.';
       txDispatch(setTxError(key, error));
       txDispatch(setTxDebuggingCompleted());
       return false;
+    }
+
+    function initiateWeb3Service(proxyAddress, proxyABI) {
+      return new Web3Service({
+        proxyAddress: proxyAddress,
+        proxyABI: proxyABI,
+        nodeUrl: envConfig.NODE_URL,
+      });
     }
 
     txDispatch(resetTxStatus());
