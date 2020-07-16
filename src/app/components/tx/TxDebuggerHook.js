@@ -1,7 +1,7 @@
 import { useEffect, useContext } from 'react';
 import Web3Service from "../../../services/Web3Service";
 import * as calculators from "../../../utils/calculators";
-import { ETHER_ADDRESS } from "../../../config/app";
+import { ETHER_ADDRESS, NEW_PROXY_ABI, PROXY_ABI } from "../../../config/app";
 import env from "../../../config/env";
 import { validateTxHash } from "../../../utils/validators";
 import { AppContext } from "../../reducers";
@@ -16,10 +16,7 @@ export default function useTxDebugger(txHash, network) {
       try {
         if (!verifyTxHash()) return;
 
-        const web3Service = new Web3Service({
-          networkAddress: envConfig.NETWORK_ADDRESS,
-          nodeUrl: envConfig.NODE_URL,
-        });
+        let web3Service = initiateWeb3Service(envConfig.NETWORK_ADDRESS, PROXY_ABI);
 
         const txData = await verifyValidTransaction(web3Service);
         if (!txData) return;
@@ -31,8 +28,13 @@ export default function useTxDebugger(txHash, network) {
         const txInput = txData.input;
 
         const receipt = await web3Service.txMined(txHash);
+        const contractAddress = receipt.to;
 
-        if (!verifyContractAddress(receipt.to)) return;
+        if (!verifyContractAddress(contractAddress)) return;
+
+        if (contractAddress === envConfig.NEW_NETWORK_ADDRESS) {
+          web3Service = initiateWeb3Service(envConfig.NEW_NETWORK_ADDRESS, NEW_PROXY_ABI);
+        }
 
         const tradeData = await verifyTradeFunction(web3Service, txInput);
         if (!tradeData) return;
@@ -334,6 +336,14 @@ export default function useTxDebugger(txHash, network) {
       txDispatch(setTxError(key, error));
       txDispatch(setTxDebuggingCompleted());
       return false;
+    }
+
+    function initiateWeb3Service(proxyAddress, proxyABI) {
+      return new Web3Service({
+        proxyAddress: proxyAddress,
+        proxyABI: proxyABI,
+        nodeUrl: envConfig.NODE_URL,
+      });
     }
 
     txDispatch(resetTxStatus());
